@@ -2883,7 +2883,7 @@ class Scatter(Procedure):
                 if self.game.config.kick_scatter_dice == 'd6':
                     distance_dice = D6(self.game.rnd)
                 elif self.game.config.kick_scatter_dice == 'd3':
-                    distance_dice = D6(self.game.rnd)
+                    distance_dice = D3(self.game.rnd)
                 else:
                     raise Exception("Unknown kick_roll_distance")
                 roll_distance = DiceRoll([distance_dice], roll_type=RollType.DISTANCE_ROLL)
