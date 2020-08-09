@@ -1858,24 +1858,28 @@ class Game:
                     n_assists_for += 1
         return (n_assists_for, n_assist_against)
 
-    def get_pass_distances(self, passer, dump_off=False):
+    def get_pass_distances(self, passer, dump_off=False, throw_teammate=False):
         """
         :param passer:
         :param weather:
         :return: two lists (squares, distances) indicating the PassDistance to each square that the passer can pass to.
         """
-        return self.get_pass_distances_at(passer, passer.position, dump_off=dump_off)
+        return self.get_pass_distances_at(passer, passer.position, dump_off=dump_off, throw_teammate=throw_teammate)
 
-    def get_pass_distances_at(self, passer, position, dump_off=False):
+    def get_pass_distances_at(self, passer, position, dump_off=False, throw_teammate=False):
         """
         :param passer:
         :param weather:
         :return: two lists (squares, distances) indicating the PassDistance to each square that the passer can pass to if at the given position.
         """
+        assert not (dump_off and throw_teammate) #can't dump off a team mate 
         squares = []
         distances = []
         if dump_off:
             distances_allowed = [PassDistance.QUICK_PASS]
+        elif throw_teammate: 
+            distances_allowed = [PassDistance.QUICK_PASS,
+                                 PassDistance.SHORT_PASS] 
         else:
             distances_allowed = [PassDistance.QUICK_PASS,
                                  PassDistance.SHORT_PASS,
