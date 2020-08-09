@@ -1887,8 +1887,8 @@ class Game:
                                  PassDistance.LONG_BOMB,
                                  PassDistance.HAIL_MARY] if Skill.HAIL_MARY_PASS in passer.get_skills() \
                 else [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS, PassDistance.LONG_PASS, PassDistance.LONG_BOMB]
-        if self.state.weather == WeatherType.BLIZZARD:
-            distances_allowed = [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS]
+            if self.state.weather == WeatherType.BLIZZARD:
+                distances_allowed = [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS]
         for y in range(len(self.state.pitch.board)):
             for x in range(len(self.state.pitch.board[y])):
                 to_position = Square(x, y)
