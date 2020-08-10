@@ -2106,6 +2106,120 @@ class PassAction(Procedure):
         Scatter(self.game, self.ball, is_pass=True)
         return True
 
+class ThrowTeamMate(Procedure): 
+    
+    def __init__(self, game, thrown_player, player): 
+        super().__init__(game)
+        self.player = player 
+        self.thrown_player = thrown_player
+        self.always_hungry = None 
+        self.target_square = None 
+        
+        self.roll = None 
+        self.reroll = None 
+        
+        self.has_ball = None 
+        
+    def start(self): 
+        self.game.report(Outcome(OutcomeType.SKILL_USED, skill=Skill.THROW_TEAM_MATE, player=self.thrower))
+        self.has_ball = self.game.has_ball(self.thrown_player)
+        
+        
+    def step(self, action): 
+        # Get target square from action 
+        assert action.action_type == ActionType.THROW_TEAM_MATE 
+        self.target_square = action.position 
+        
+        #Handle always hungry 
+        if self.player.has_skill(Skill.ALWAYS_HUNGRY) 
+            if self.always_hungry is None: 
+                self.always_hungry = AlwaysHungry(self.game, self.player, snack=self.thrown_player)
+                return False 
+            
+            assert self.always_hungry is not None 
+            if self.always_hungry.failed: 
+                return True 
+        
+        
+        #Make pass rolls 
+        if self.roll is None:
+            
+            # Roll
+            self.roll = DiceRoll([D6(self.game.rnd)], roll_type=RollType.AGILITY_ROLL)
+            self.roll.target = Rules.agility_table[self.player.get_ag()]
+            self.roll.modifiers = self.game.get_pass_modifiers(self.player, self.pass_distance)
+            result = self.roll.get_sum()
+            mod_result = result + self.roll.modifiers
+            
+            if result == 1 or (mod_result <= 1):
+                # Fumble
+                self.fumble = True
+                self.game.report(Outcome(OutcomeType.THROW_TEAM_MATE_FUMBLE, player=self.player, rolls=[self.roll]))
+                
+                #Land thrown player at old position 
+                
+            else:
+                # Inaccurate pass
+                self.game.report(Outcome(OutcomeType.THROW_TEAM_MATE_SUCCESS, player=self.player, rolls=[self.roll]))
+                
+                #Scatter team mate 
+                
+                #Land right stuff 
+                
+                return True 
+
+            # Check if re-roll available
+            self.reroll = Reroll(self.game, self.player, context=self)
+            return False
+
+            
+            
+        
+        if self.reroll.use_reroll:
+            self.reroll = None
+            self.roll = None
+            self.fumble = False
+            return False
+        
+        
+    def available_actions(self):
+        #TODO 
+    
+        positions, distances = self.game.get_pass_distances(self.player, throw_teammate=True)
+        agi_rolls = []
+        cache = {}
+        for i in range(len(distances)):
+            distance = distances[i]
+            position = positions[i]
+            if distance not in cache:
+                modifiers = self.game.get_pass_modifiers(self.player, distance)
+                target = Rules.agility_table[self.player.get_ag()]
+                cache[distance] = min(6, max(2, target - modifiers)) 
+                assert False #change to only consider passing fumble 
+            rolls = [cache[distance]]
+            agi_rolls.append(rolls)
+        if len(positions) > 0:
+            actions.append(ActionChoice(ActionType.THROW_TEAM_MATE, team=self.player.team,
+                                        positions=positions, agi_rolls=agi_rolls))
+    
+    
+
+class AlwaysHungry(Procedure):
+
+    def __init__(self, game, player, snack):
+        super().__init__(game)
+        self.roll = None 
+        self.rerll = None 
+        
+    def start(self): 
+        self.game.report(Outcome(OutcomeType.SKILL_USED, skill=Skill.ALWAYS_HUNGRY, player=self.player)) #TODO 
+    
+    def step(self, action): 
+        # Roll 
+        self.failed = False 
+        
+        
+        
 
 class Pickup(Procedure):
 
@@ -2417,6 +2531,14 @@ class PlayerAction(Procedure):
 
         elif action.action_type == ActionType.PASS:
 
+            #check for throw team mate 
+            if self.player.has_skill(Skill.THROW_TEAMMATE) and not self.game.has_ball(self.player): 
+                EndPlayerTurn(self.game, self.player)
+                thrown_player = self.game.get_player_at(action.position)
+                ThrowTeamMate(self.game, thrown_player, self.player)
+                self.turn.pass_available = False
+                return True 
+            
             # Check distance
             pass_distance = self.game.get_pass_distance(self.player.position, action.position)
             if not self.dump_off:
@@ -2599,7 +2721,14 @@ class PlayerAction(Procedure):
         else:
             actions.append(ActionChoice(ActionType.END_PLAYER_TURN, team=self.player.team))
         return actions
-
+        
+        #Throw team mate actions - add adjecent teammate with Skill.RIGHT_STUFF 
+        if self.player_action_type == PlayerActionType.PASS and self.player.has_skill(Skill.THROW_TEAMMATE) and not self.game.has_ball(self.player): 
+            right_stuff_players = self.game.get_adjacent_teammates(self.player, down=False, skill=Skill.RIGHT_STUFF)
+            for p in right_stuff_players: 
+                actions.append( ActionChoice(ActionType.PASS, team=self.player.team, position=p.position, rolls=[2]) )
+            
+            
 
 class StartGame(Procedure):
 
