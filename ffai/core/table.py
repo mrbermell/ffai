@@ -211,6 +211,8 @@ class OutcomeType(Enum):
     JUMP_UP = 153
     FAILED_JUMP_UP = 154
     DECAYING = 155
+    THROW_TEAM_MATE_SUCCESS = 156
+    THROW_TEAM_MATE_FUMBLE = 157 
 
 
 class PlayerActionType(Enum):
@@ -336,6 +338,7 @@ class ActionType(Enum):
     FOLLOW_UP = 55
     LEAP = 56
     STAB = 57
+    THROW_TEAM_MATE = 58  
 
 
 class WeatherType(Enum):
