@@ -2093,6 +2093,8 @@ class Game:
                     if o.has_tackle_zone() ]
                 
     def get_hypno_modifier(self, player): 
+    
+    
         """
         :param player: player on the board with hypnotic gaze skill. 
         :return:  modifier for player to hypnotize target. 
@@ -2100,4 +2102,11 @@ class Game:
         return 1 - self.num_tackle_zones_in(player) 
         
 
+    def get_home_in_lead(self): 
+        if self.state.home_team.state.score > self.state.away_team.state.score: 
+            return 1 
+        elif self.state.home_team.state.score < self.state.away_team.state.score: 
+            return -1 
+        else: 
+            return 0 
         

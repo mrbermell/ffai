@@ -270,7 +270,16 @@ class FFAIEnv(gym.Env):
             'round': self.game.state.round,
             'ball_progression': progression
         }
-        return self._observation(self.game), reward, self.game.state.game_over, info
+        
+        # End epside after first drive 
+        done = self.game.state.game_over or team.state.score>0 or opp_team.state.score>0 or self.game.state.half>1 
+        
+        lect_outcome = None 
+        if self.lecture is not None: 
+            lect_outcome = self.lecture.evaluate(self.game, drive_over=done)
+        
+        
+        return self._observation(self.game), reward, done, info, lect_outcome
 
     def seed(self, seed=None):
         if seed is None:
@@ -386,23 +395,36 @@ class FFAIEnv(gym.Env):
 
         return obs
 
-    def reset(self):
+    def reset(self, lecture=None):
         self.team_id = self.home_team.team_id
         home_agent = self.actor
         away_agent = self.opp_actor
         seed = self.rnd.randint(0, 2**31)
-        self.game = Game(game_id=str(uuid.uuid1()),
-                         home_team=deepcopy(self.home_team),
-                         away_team=deepcopy(self.away_team),
-                         home_agent=home_agent,
-                         away_agent=away_agent,
-                         config=self.config,
-                         ruleset=self.ruleset,
-                         seed=seed)
+        #uid = str(uuid.uuid1())
+        
+        if lecture is not None: 
+            self.lecture = lecture 
+            self.game = lecture.reset_game(config=self.config)
+            self.game.set_seed(seed)
+            self.game.set_available_actions() 
+        
+        else: 
+            self.game = Game(game_id=uid,
+                             home_team=deepcopy(self.home_team),
+                             away_team=deepcopy(self.away_team),
+                             home_agent=home_agent,
+                             away_agent=away_agent,
+                             config=self.config,
+                             ruleset=self.ruleset,
+                             seed=seed)
+        
         self.last_report_idx = len(self.game.state.reports)
         self.last_ball_team = None
         self.last_ball_x = None
-        self.game.init()
+        
+        if lecture is None: 
+            self.game.init() 
+        
         self.own_team = self.game.get_agent_team(self.actor)
         self.opp_team = self.game.get_agent_team(self.opp_actor)
 
