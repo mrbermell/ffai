@@ -16,6 +16,7 @@ import tkinter as tk
 import math
 from copy import deepcopy
 
+from pytest import set_trace 
 
 class FFAIEnv(gym.Env):
 
@@ -654,3 +655,18 @@ class FFAIEnv(gym.Env):
         self.root = None
         self.cv = None
 
+    def get_action_shape(self): 
+        board_shape = self.observation_space.spaces['board'].shape
+        squares = board_shape[1] * board_shape[2]
+        return len(FFAIEnv.simple_action_types) + squares * len(FFAIEnv.positional_action_types) 
+        
+    def get_spatial_obs_shape(self): 
+        spatial_obs_space = self.observation_space.spaces['board'].shape
+        return spatial_obs_space
+        
+    def get_non_spatial_obs_shape(self): 
+        obs = self.observation_space.spaces
+        non_spatial_obs_space = obs['state'].shape[0] + obs['procedures'].shape[0] + obs['available-action-types'].shape[0]
+        return (1, non_spatial_obs_space) 
+        
+        
