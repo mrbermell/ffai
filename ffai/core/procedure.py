@@ -9,6 +9,7 @@ before other procedures are run. Procedures can add other procedures to the stac
 """
 from abc import abstractmethod, ABCMeta
 
+from ffai.ai.pathfinding import get_all_paths 
 from ffai.core.model import *
 from ffai.core.table import *
 import time
@@ -2549,6 +2550,15 @@ class PlayerAction(Procedure):
                             modifiers = self.game.get_pickup_modifiers(self.player, square)
                             rolls.append(min(6, max(2, target - modifiers)))
                     agi_rolls.append(rolls)
+                
+                if True and not self.turn.quick_snap and self.player.state.up: 
+                    # TODO: memoize the pathfinding.                
+                    self.paths = [p for p in get_all_paths(self.game, self.player) if len(p.steps)>1] 
+                    squares = [p.steps[-1] for p in self.paths] 
+                    for sq in squares: 
+                        move_positions.append(sq)
+                        agi_rolls.append([])
+                    
                 if len(move_positions) > 0:
                     actions.append(ActionChoice(ActionType.MOVE, team=self.player.team,
                                                 positions=move_positions, agi_rolls=agi_rolls))

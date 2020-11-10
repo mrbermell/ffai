@@ -9,7 +9,6 @@ This module contains pathfinding functionalities for FFAI.
 from typing import Optional, List
 from ffai.core.model import Player, Square
 from ffai.core.table import Skill, WeatherType, Tile
-from ffai.core.game import Game
 import time
 import copy
 from functools import lru_cache
