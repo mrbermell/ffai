@@ -2351,6 +2351,9 @@ class PlayerAction(Procedure):
         self.blitz_block = False
         self.turn = turn
         self.dump_off = dump_off
+        
+        self.paths = None 
+        self.path_steps = [] 
 
     def start(self):
         if self.dump_off:
@@ -2361,6 +2364,15 @@ class PlayerAction(Procedure):
         if self.player.state.used:
             return True
 
+        if len(self.path_steps) > 0: 
+            
+            assert action is None 
+            pos = self.path_steps.pop(0) 
+            
+            assert self.game.get_player_at(pos) is None 
+            assert self.player.position.distance(pos) == 1 
+            action = Action(ActionType.MOVE, pos ) 
+            
         if self.player_action_type == PlayerActionType.BLOCK and not self.player.state.up:
             assert self.player.has_skill(Skill.JUMP_UP)
             JumpUpToBlock(self.game, self.player)
@@ -2411,7 +2423,16 @@ class PlayerAction(Procedure):
             return False
 
         elif action.action_type == ActionType.MOVE:
-
+            
+            if self.player.position.distance( action.position ) > 1: 
+                assert self.paths is not None 
+                assert len(self.path_steps) == 0 
+                path = [p.steps for p in self.paths if p.steps[-1] == action.position]
+                
+                assert len(path) == 1 
+                self.path_steps = path[0]
+                return False 
+           
             # Check GFI
             gfi = self.player.state.moves + 1 > self.player.get_ma()
 
@@ -2509,7 +2530,7 @@ class PlayerAction(Procedure):
             
     def available_actions(self):
 
-        if self.player.state.used:
+        if self.player.state.used or len(self.path_steps) > 0:
             return []
 
         actions = []
@@ -2551,6 +2572,7 @@ class PlayerAction(Procedure):
                             rolls.append(min(6, max(2, target - modifiers)))
                     agi_rolls.append(rolls)
                 
+                # Path finding - all available end squares. (no probabilities) 
                 if True and not self.turn.quick_snap and self.player.state.up: 
                     # TODO: memoize the pathfinding.                
                     self.paths = [p for p in get_all_paths(self.game, self.player) if len(p.steps)>1] 
