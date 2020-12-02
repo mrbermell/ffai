@@ -22,11 +22,16 @@ def assert_moves(game, player):
 def test_many_moves_from_one_action(): 
     game = get_game_turn()
     team = game.get_agent_team(game.actor)
+    opp_team = game.get_opp_team(team)
     game.clear_board()
     
     player = team.players[0]
     start_square = Square(1,1)
     game.put(player, start_square ) 
+    
+    opp_player = opp_team.players[0]
+    game.put(player, Square(3,3)) 
+    
     
     target = Square(5,4)
     
@@ -40,4 +45,5 @@ def test_many_moves_from_one_action():
     assert_moves(game, player) #After initial movement 
     
     assert player.position == target 
+    
     
