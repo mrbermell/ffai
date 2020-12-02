@@ -198,7 +198,7 @@ class Pathfinder:
         self.max_moves = max_moves
         # Max search depth
         if self.max_moves is None:
-            self.ma = self.player.get_ma()
+            self.ma = self.player.num_moves_left(include_gfi=False)
             self.max_moves = self.player.num_moves_left()
         else:
             self.ma = self.max_moves
