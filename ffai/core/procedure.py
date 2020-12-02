@@ -2584,6 +2584,13 @@ class PlayerAction(Procedure):
                         rolls = []
                         for roll in p.rolls: 
                             rolls.extend(roll)
+                        
+                        ball_at = self.game.get_ball_at(sq)
+                        if ball_at is not None and ball_at.on_ground:
+                            target = Rules.agility_table[self.player.get_ag()]
+                            modifiers = self.game.get_pickup_modifiers(self.player, sq)
+                            rolls.append(min(6, max(2, target - modifiers)))
+                        
                         agi_rolls.append( rolls )
                         
                 if len(move_positions) > 0:
