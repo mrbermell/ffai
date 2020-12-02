@@ -361,6 +361,9 @@ class Pathfinder:
             if not self._can_beat_best(current):
                 continue
 
+            if self.game.get_ball_at(current.position) is not None: 
+                continue 
+            
             # Expand
             for neighbour in self.game.get_adjacent_squares(current.position, occupied=False):
 
@@ -408,7 +411,7 @@ class Pathfinder:
                     self.pareto_frontiers[neighbour].add(node)
 
                     # If it's on the pareto frontier
-                    if node in self.pareto_frontiers[neighbour].nodes:
+                    if node in self.pareto_frontiers[neighbour].nodes and node.prob > 0.999:
 
                         # Add it to the open set
                         self.openset.append(node)
