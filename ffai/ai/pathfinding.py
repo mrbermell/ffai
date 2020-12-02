@@ -14,15 +14,17 @@ import copy
 from functools import lru_cache
 import numpy as np
 
+from pytest import set_trace 
 
 class Path:
 
-    def __init__(self, steps: List['Square'], prob: float):
+    def __init__(self, steps: List['Square'], prob: float, rolls=[]):
         self.steps = steps
         self.prob = prob
         self.dodge_used_prob: float = 0
         self.sure_feet_used_prob: float = 0
         self.rr_used_prob: float = 0
+        self.rolls = rolls 
 
     def __len__(self) -> int:
         return len(self.steps)
@@ -54,6 +56,8 @@ class Node:
             self.sure_feet_used_prob: float = 0
             self.rr_used_prob: float = 0
         self.update_costs()
+        
+        self.rolls = []
 
     def update_costs(self):
         self.costs[0] = round(1-self.prob, 2)
@@ -66,7 +70,7 @@ class Node:
         self.moves += moves
         self.costs[1] = self.moves
 
-    def add_dodge_prob(self, p:float, dodge_skill=False, rr=False):
+    def add_dodge_prob(self, p:float, dodge_skill=False, rr=False, roll=[]):
         can_use_dodge_p = 0 if not dodge_skill else 1 - self.dodge_used_prob
         assert can_use_dodge_p <= 1
         dodge_used_now_p = (1-p) * can_use_dodge_p
@@ -85,8 +89,10 @@ class Node:
         self.dodge_used_prob += success_skill
         self.rr_used_prob += success_reroll
         self.costs[0] = round(1-self.prob, 2)
+        
+        self.rolls.append(roll) 
 
-    def add_gfi_prob(self, p:float, sure_feet_skill=False, rr=False):
+    def add_gfi_prob(self, p:float, sure_feet_skill=False, rr=False, roll=[]):
         can_use_sure_feet_p = 0 if not sure_feet_skill else 1 - self.sure_feet_used_prob
         assert can_use_sure_feet_p <= 1
         sure_feet_used_now_p = (1 - p) * can_use_sure_feet_p
@@ -106,6 +112,7 @@ class Node:
         self.rr_used_prob += success_reroll
         self.costs[0] = round(1-self.prob, 2)
 
+        self.rolls.append(roll)
 
 class SortedList:
 
@@ -210,13 +217,17 @@ class Pathfinder:
 
     def _collect_path(self, node):
         steps = []
+        rolls = [] 
         n = node
         while n is not None:
             steps.append(n.position)
+            rolls.append(n.rolls) 
             n = n.parent
         steps.reverse()
+        rolls.reverse() 
         steps = steps[1:]
-        path = Path(steps, prob=node.prob)
+        rolls = rolls[1:]
+        path = Path(steps, prob=node.prob, rolls = rolls)
         path.dodge_used_prob = node.dodge_used_prob
         path.sure_feet_used_prob = node.sure_feet_used_prob
         path.rr_used_prob = node.rr_used_prob
@@ -271,9 +282,10 @@ class Pathfinder:
                                                                                                   skill=Skill.TACKLE)
         can_use_rr = self.allow_rr and self.game.can_use_reroll(self.player.team)
         if node.moves > self.ma:
-            node.add_gfi_prob(5 / 6, sure_feet_skill=self.player.has_skill(Skill.SURE_FEET), rr=can_use_rr)
+            node.add_gfi_prob(5 / 6, sure_feet_skill=self.player.has_skill(Skill.SURE_FEET), rr=can_use_rr, roll=2)
         if dodge_p < 1.0:
-            node.add_dodge_prob(dodge_p, dodge_skill=can_use_dodge, rr=can_use_rr)
+            roll = self.game.get_dodge_roll_from(self.player, from_position=current.position, to_position=neighbour )
+            node.add_dodge_prob(dodge_p, dodge_skill=can_use_dodge, rr=can_use_rr, roll=roll)
         return node
 
     def _add_blitz(self, node):

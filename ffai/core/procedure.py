@@ -2576,14 +2576,16 @@ class PlayerAction(Procedure):
                 if True and not self.turn.quick_snap and self.player.state.up: 
                     # TODO: memoize the pathfinding.                
                     num_moves = len(self.player.state.squares_moved) - 2
-                    self.paths = [p for p in get_all_paths(self.game, self.player, num_moves_used = num_moves ) if len(p.steps)>1 and p.prob > 0.999] 
+                    self.paths = [p for p in get_all_paths(self.game, self.player, num_moves_used = num_moves ) if len(p.steps)>1] 
                     for p in self.paths: 
                         sq = p.steps[-1]
-                        assert p.prob > 0.999
-                        
                         move_positions.append(sq)
-                        agi_rolls.append( [] )
-                    
+                        
+                        rolls = []
+                        for roll in p.rolls: 
+                            rolls.extend(roll)
+                        agi_rolls.append( rolls )
+                        
                 if len(move_positions) > 0:
                     actions.append(ActionChoice(ActionType.MOVE, team=self.player.team,
                                                 positions=move_positions, agi_rolls=agi_rolls))

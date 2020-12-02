@@ -1724,7 +1724,18 @@ class Game:
         p = self.get_dodge_prob(player, to_position, allow_dodge_reroll, allow_team_reroll)
         self.move(player, orig_position)
         return p
-
+    
+    def get_dodge_roll_from(self, player, from_position, to_position): 
+        orig_position = self.get_square(player.position.x, player.position.y)
+        self.move(player, from_position)
+        
+        modifiers = self.get_dodge_modifiers(player, to_position)
+        target = Rules.agility_table[player.get_ag()]
+        dodge_roll = min(6, max(2, target - modifiers))
+            
+        self.move(player, orig_position)
+        return dodge_roll
+    
     def get_pickup_prob(self, player, position, allow_pickup_reroll=True, allow_team_reroll=False):
         """
         :param player:
