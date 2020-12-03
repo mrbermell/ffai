@@ -365,7 +365,7 @@ class Pathfinder:
             if not self._can_beat_best(current):
                 continue
 
-            if self.game.get_ball_at(current.position) is not None: 
+            if self.game.get_ball_at(current.position) is not None and self.player.position != current.position: 
                 continue 
             
             # Expand
