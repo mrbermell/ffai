@@ -8,7 +8,7 @@ This module contains pathfinding functionalities for FFAI.
 
 from typing import Optional, List
 from ffai.core.model import Player, Square
-from ffai.core.table import Skill, WeatherType, Tile
+from ffai.core.table import Skill, WeatherType, Tile, PathFindingOptions
 import time
 import copy
 from functools import lru_cache
@@ -182,7 +182,7 @@ class ParetoFrontier:
 
 class Pathfinder:
 
-    def __init__(self, game, player, position=None, target_x=None, target_player=None, allow_rr=False, blitz=False, max_moves=None, all=False):
+    def __init__(self, game, player, position=None, target_x=None, target_player=None, allow_rr=False, blitz=False, max_moves=None, all=False, pf_option=None):
         self.game = game
         self.player = player
         self.position = position
@@ -195,6 +195,7 @@ class Pathfinder:
         self.pareto_frontiers = {}
         self.best = None
         self.openset = SortedList(lambda x: x.prob)
+        
         self.max_moves = max_moves
         # Max search depth
         if self.max_moves is None:
@@ -214,7 +215,10 @@ class Pathfinder:
             assert self.target_x is None or (self.position is None and self.target_player is None)
             assert self.target_player is None or (
                         self.position is None and self.target_x is None and self.target_player.position is not None)
-
+        
+        self.pf_option = PathFindingOptions.ALL_PATHS if pf_option is None else pf_option  
+        
+        
     def _collect_path(self, node):
         steps = []
         rolls = [] 
@@ -372,7 +376,10 @@ class Pathfinder:
 
                 # Make expanded node
                 node = self._get_child(current, neighbour)
-
+                
+                if self.pf_option == PathFindingOptions.NO_ROLL_PATHS and node.prob < 0.999: 
+                    continue 
+                
                 # If a potential blitz position, copy node and add to blitzes
                 if self.all and \
                             self.blitz and \
@@ -410,8 +417,11 @@ class Pathfinder:
                         self.pareto_frontiers[neighbour] = ParetoFrontier()
                     self.pareto_frontiers[neighbour].add(node)
 
+                    if self.pf_option == PathFindingOptions.SINGLE_ROLL_PATHS and node.prob < 0.999:
+                        continue 
+                    
                     # If it's on the pareto frontier
-                    if node in self.pareto_frontiers[neighbour].nodes and node.prob > 0.999:
+                    if node in self.pareto_frontiers[neighbour].nodes:
 
                         # Add it to the open set
                         self.openset.append(node)
@@ -517,7 +527,7 @@ def get_safest_path_to_player(game, player, target_player, from_position=None, a
     return path
 
 
-def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num_moves_used=None, blitz=False):
+def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num_moves_used=None, blitz=False, pf_option=None):
     """
     :param game:
     :param player: the player to move
@@ -525,12 +535,11 @@ def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num
     :param num_moves_used: the number of moves already used by the player. If None, it will use the player's current number of used moves.
     :param allow_team_reroll: allow team rerolls to be used.
     :param blitz: only finds blitz moves if True.
-    :return a path containing the list of squares that forms the safest (and thereafter shortest) path for the given player to
-    a position that is adjacent to the other player and the probability of success.
+    :return a list of optimal probability paths to all squares that the given player can reach
     """
     if from_position is not None and num_moves_used != 0:
         orig_player, orig_ball = _alter_state(game, player, from_position, num_moves_used)
-    finder = Pathfinder(game, player, allow_rr=allow_team_reroll, blitz=blitz, all=True)
+    finder = Pathfinder(game, player, allow_rr=allow_team_reroll, blitz=blitz, all=True, pf_option=pf_option)
     paths = finder.get_paths()
     if from_position is not None and num_moves_used != 0:
         _reset_state(game, player, orig_player, orig_ball)

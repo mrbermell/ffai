@@ -459,6 +459,11 @@ class PassDistance(Enum):
     LONG_BOMB = 4
     HAIL_MARY = 5
 
+class PathFindingOptions(Enum): 
+    NOT_ENABLED = 0
+    NO_ROLL_PATHS = 1
+    SINGLE_ROLL_PATHS = 2 
+    ALL_PATHS = 3 
 
 class Rules:
 

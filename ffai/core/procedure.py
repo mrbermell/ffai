@@ -2572,11 +2572,10 @@ class PlayerAction(Procedure):
                             rolls.append(min(6, max(2, target - modifiers)))
                     agi_rolls.append(rolls)
                 
-                # Path finding - all available end squares. (no probabilities) 
-                if True and not self.turn.quick_snap and self.player.state.up: 
-                    # TODO: memoize the pathfinding.                
+                # Path finding 
+                if self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up: 
                     num_moves = len(self.player.state.squares_moved) - 2
-                    self.paths = [p for p in get_all_paths(self.game, self.player, num_moves_used = num_moves ) if len(p.steps)>1] 
+                    self.paths = [p for p in get_all_paths(self.game, self.player, num_moves_used = num_moves, pf_option = self.game.config.pathfinding ) if len(p.steps)>1] 
                     for p in self.paths: 
                         sq = p.steps[-1]
                         move_positions.append(sq)

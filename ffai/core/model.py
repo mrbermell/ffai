@@ -144,6 +144,7 @@ class Configuration:
         self.offensive_formations = []
         self.defensive_formations = []
         self.time_limits = None
+        self.pathfinding = PathFindingOptions.ALL_PATHS 
 
 
 class PlayerState:
