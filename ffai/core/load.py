@@ -248,6 +248,14 @@ def load_config(name):
                                    data['defensive_formations']]
     config.offensive_formations = [load_formation(formation, size=config.pitch_max) for formation in
                                    data['offensive_formations']]
+    
+    path_option_dicts = {   "not enabled": PathFindingOptions.NOT_ENABLED , 
+                            "no roll paths": PathFindingOptions.NO_ROLL_PATHS, 
+                            "single roll paths": PathFindingOptions.SINGLE_ROLL_PATHS, 
+                            "all paths": PathFindingOptions.ALL_PATHS }
+    key = data['pathfinding'] 
+    config.pathfinding = path_option_dicts[ key ] 
+    
     game = None
     disqualification = None
     turn = None
