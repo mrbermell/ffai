@@ -179,6 +179,8 @@ class FFAIEnv(gym.Env):
         self.own_team = None
         self.opp_team = None
 
+        self.lecture = None
+
         self.layers = [
             OccupiedLayer(),
             OwnPlayerLayer(),
@@ -401,7 +403,7 @@ class FFAIEnv(gym.Env):
         home_agent = self.actor
         away_agent = self.opp_actor
         seed = self.rnd.randint(0, 2**31)
-        #uid = str(uuid.uuid1())
+        uid = str(uuid.uuid1())
         
         if lecture is not None: 
             self.lecture = lecture 
@@ -658,7 +660,7 @@ class FFAIEnv(gym.Env):
     def get_action_shape(self): 
         board_shape = self.observation_space.spaces['board'].shape
         squares = board_shape[1] * board_shape[2]
-        return len(FFAIEnv.simple_action_types) + squares * len(FFAIEnv.positional_action_types) 
+        return len(FFAIEnv.simple_action_types) + len(FFAIEnv.defensive_formation_action_types) + len(FFAIEnv.offensive_formation_action_types)  + squares * len(FFAIEnv.positional_action_types)
         
     def get_spatial_obs_shape(self): 
         spatial_obs_space = self.observation_space.spaces['board'].shape
