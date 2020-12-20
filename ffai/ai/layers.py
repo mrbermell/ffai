@@ -512,7 +512,7 @@ class OppTouchdownLayer(MemoizedFeatureLayer):
         return "opp touchdown"
 
 
-class CrowdLayer(FeatureLayer):
+class CrowdLayer(MemoizedFeatureLayer):
 
     def produce(self, game):
         out = np.zeros((game.arena.height, game.arena.width))
@@ -523,3 +523,6 @@ class CrowdLayer(FeatureLayer):
 
     def name(self):
         return "opp crowd"
+
+    def calculate_key(self, game):
+        return "k" #Will not change
