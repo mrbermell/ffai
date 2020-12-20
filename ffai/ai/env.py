@@ -410,7 +410,8 @@ class FFAIEnv(gym.Env):
             self.game = lecture.reset_game(config=self.config)
             self.game.set_seed(seed)
             self.game.set_available_actions() 
-        
+            self.actor = self.game.home_agent
+            self.opp_actor = self.game.away_agent
         else: 
             self.game = Game(game_id=uid,
                              home_team=deepcopy(self.home_team),
