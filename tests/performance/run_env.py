@@ -53,7 +53,7 @@ def run_env(n, env_name="FFAI-11-v2"):
             }
 
             # Gym step function
-            obs, reward, done, info = env.step(action)
+            (obs, reward, done, info, _) = env.step(action)
             steps += 1
 
 
