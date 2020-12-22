@@ -2371,7 +2371,14 @@ class PlayerAction(Procedure):
             
             assert self.game.get_player_at(pos) is None 
             assert self.player.position.distance(pos) == 1 
-            action = Action(ActionType.MOVE, pos ) 
+            action = Action(ActionType.MOVE, pos)
+
+            if len(self.path_steps) == 0 and self.path_prob > 0.999 and \
+                    self.game.num_tackle_zones_at(self.player, action.position) == 0 and \
+                    self.game.get_ball().position != pos:
+
+                EndPlayerTurn(self.game, self.player)
+
             
         if self.player_action_type == PlayerActionType.BLOCK and not self.player.state.up:
             assert self.player.has_skill(Skill.JUMP_UP)
@@ -2427,11 +2434,13 @@ class PlayerAction(Procedure):
             if self.player.position.distance( action.position ) > 1: 
                 assert self.paths is not None 
                 assert len(self.path_steps) == 0 
-                path = [p.steps for p in self.paths if p.steps[-1] == action.position]
+                path = [p for p in self.paths if p.steps[-1] == action.position]
                 
-                assert len(path) == 1 
-                self.path_steps = path[0]
-                return False 
+                assert len(path) == 1
+                self.path_steps = path[0].steps
+                self.path_prob = path[0].prob
+
+                return False
            
             # Check GFI
             gfi = self.player.state.moves + 1 > self.player.get_ma()
@@ -2571,11 +2580,11 @@ class PlayerAction(Procedure):
                             modifiers = self.game.get_pickup_modifiers(self.player, square)
                             rolls.append(min(6, max(2, target - modifiers)))
                     agi_rolls.append(rolls)
-                
-                # Path finding 
-                if self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up: 
-                    num_moves = len(self.player.state.squares_moved) - 2
-                    self.paths = [p for p in get_all_paths(self.game, self.player, pf_option = self.game.config.pathfinding ) if len(p.steps)>1] 
+
+                # Path finding
+                # TODO: add option for non human actors to get path finding
+                if self.game.get_team_agent(self.player.team).human and self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up:
+                    self.paths = [p for p in get_all_paths(self.game, self.player, pf_option = self.game.config.pathfinding) if p.steps[-1].distance(self.player.position) > 1]
                     for p in self.paths: 
                         sq = p.steps[-1]
                         move_positions.append(sq)

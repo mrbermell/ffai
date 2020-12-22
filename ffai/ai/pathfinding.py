@@ -412,14 +412,14 @@ class Pathfinder:
                     if current.moves == self.max_moves:
                         continue
 
+                    if self.pf_option == PathFindingOptions.SINGLE_ROLL_PATHS and current.prob < 0.999 and current.prob > node.prob+0.0001:
+                        continue
+
                     # Add to pareto frontier
                     if neighbour not in self.pareto_frontiers:
                         self.pareto_frontiers[neighbour] = ParetoFrontier()
                     self.pareto_frontiers[neighbour].add(node)
 
-                    if self.pf_option == PathFindingOptions.SINGLE_ROLL_PATHS and node.prob < 0.999:
-                        continue 
-                    
                     # If it's on the pareto frontier
                     if node in self.pareto_frontiers[neighbour].nodes:
 

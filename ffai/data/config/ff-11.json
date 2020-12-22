@@ -22,5 +22,5 @@
         "init": 10,
         "end": 10
     },
-    "pathfinding": "not enabled"
+    "pathfinding": "single roll paths"
 }
