@@ -228,7 +228,7 @@ class FFAIEnv(gym.Env):
             'y': spaces.Discrete(arena.height)
         })
 
-    def step(self, action):
+    def step(self, action, skip_obs=False):
         if type(action['action-type']) is ActionType and action['action-type'] in FFAIEnv.actions:
             action_type = action['action-type']
         else:
@@ -240,9 +240,9 @@ class FFAIEnv(gym.Env):
             position = p
         real_action = Action(action_type=action_type, position=position, player=player)
         self.last_report_idx = len(self.game.state.reports)
-        return self._step(real_action)
+        return self._step(real_action, skip_obs)
 
-    def _step(self, action):
+    def _step(self, action, skip_obs=False):
         self.game.step(action)
         if action.action_type in FFAIEnv.offensive_formation_action_types or action.action_type in FFAIEnv.defensive_formation_action_types:
             self.game.step(Action(ActionType.END_SETUP))
@@ -281,8 +281,10 @@ class FFAIEnv(gym.Env):
         if self.lecture is not None: 
             lect_outcome = self.lecture.evaluate(self.game, drive_over=done)
         
-        
-        return self._observation(self.game), reward, done, info, lect_outcome
+        if skip_obs:
+            return None, reward, done, info, lect_outcome
+        else:
+            return self._observation(self.game), reward, done, info, lect_outcome
 
     def seed(self, seed=None):
         if seed is None:
@@ -398,7 +400,7 @@ class FFAIEnv(gym.Env):
 
         return obs
 
-    def reset(self, lecture=None):
+    def reset(self, lecture=None, skip_obs=False):
         self.team_id = self.home_team.team_id
         home_agent = self.actor
         away_agent = self.opp_actor
@@ -432,7 +434,10 @@ class FFAIEnv(gym.Env):
         self.own_team = self.game.get_agent_team(self.actor)
         self.opp_team = self.game.get_agent_team(self.opp_actor)
 
-        return self._observation(self.game)
+        if skip_obs:
+            return None
+        else:
+            return self._observation(self.game)
 
     def get_outcomes(self):
         if self.last_report_idx == len(self.game.state.reports):
