@@ -2693,7 +2693,7 @@ class PlayerAction(Procedure):
         if self.dump_off:
             actions.append(ActionChoice(ActionType.DONT_USE_SKILL, team=self.player.team, skill=Skill.DUMP_OFF))
         else:
-            actions.append(ActionChoice(ActionType.END_PLAYER_TURN, team=self.player.team))
+            actions.append(ActionChoice(ActionType.END_PLAYER_TURN, positions=[self.player.position], team=self.player.team))
         return actions
 
 

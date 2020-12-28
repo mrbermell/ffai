@@ -1888,15 +1888,16 @@ class Game:
                 else [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS, PassDistance.LONG_PASS, PassDistance.LONG_BOMB]
         if self.state.weather == WeatherType.BLIZZARD:
             distances_allowed = [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS]
-        for y in range(len(self.state.pitch.board)):
-            for x in range(len(self.state.pitch.board[y])):
-                to_position = Square(x, y)
-                if self.is_out_of_bounds(to_position) or position == to_position:
-                    continue
-                distance = self.get_pass_distance(position, to_position)
-                if distance in distances_allowed:
-                    squares.append(to_position)
-                    distances.append(distance)
+        # for y in range(len(self.state.pitch.board)):
+            # for x in range(len(self.state.pitch.board[y])):
+        for team_mate in self.get_players_on_pitch(passer.team, up=True):
+
+            if self.is_out_of_bounds(team_mate.position) or team_mate == passer:
+                continue
+            distance = self.get_pass_distance(position, team_mate.position)
+            if distance in distances_allowed:
+                squares.append(team_mate.position)
+                distances.append(distance)
         return squares, distances
 
     def get_pass_distance(self, from_position, to_position):

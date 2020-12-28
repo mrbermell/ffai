@@ -88,7 +88,6 @@ class FFAIEnv(gym.Env):
         ActionType.KICK,
         ActionType.RECEIVE,
         ActionType.END_SETUP,
-        ActionType.END_PLAYER_TURN,
         ActionType.USE_REROLL,
         ActionType.DONT_USE_REROLL,
         ActionType.USE_SKILL,
@@ -132,7 +131,8 @@ class FFAIEnv(gym.Env):
         ActionType.START_BLITZ,
         ActionType.START_PASS,
         ActionType.START_FOUL,
-        ActionType.START_HANDOFF
+        ActionType.START_HANDOFF,
+        ActionType.END_PLAYER_TURN
     ]
 
     # Procedures that require actions
