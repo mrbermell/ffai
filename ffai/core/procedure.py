@@ -652,7 +652,7 @@ class Casualty(Procedure):
         self.effect = None
         self.decay = decay
         self.regeneration = None
-        self.blood_lust = blood_lust
+        self.blood_lust = blood_lust +1
 
     def step(self, action):
 
@@ -2732,7 +2732,7 @@ class PlayerAction(Procedure):
                 actions.append(ActionChoice(ActionType.PASS, team=self.player.team,
                                             positions=positions, agi_rolls=agi_rolls))
 
-        # Hypnotic gaze action
+        # Hypnotic gaze action 
         if self.player.has_skill(Skill.HYPNOTIC_GAZE) and  self.player.state.up and \
                 self.player_action_type == PlayerActionType.MOVE:
 
@@ -3796,7 +3796,7 @@ class BloodLust(Negatrait):
             BloodLustBlockOrMove(self.game, self.player, self.player_action)
 
     def remove_fail_state(self):
-        pass  # blood lust is removed by EatThrall-procedure
+        pass  # blood lust is removed by EatThrall-procedure 
 
 
 class Reroll(Procedure):
