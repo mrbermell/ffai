@@ -9,7 +9,7 @@ before other procedures are run. Procedures can add other procedures to the stac
 """
 from abc import abstractmethod, ABCMeta
 
-from ffai.ai.pathfinding import get_all_paths
+from ffai.ai.pathfinding import get_all_paths 
 from ffai.core.model import *
 from ffai.core.table import *
 import time
@@ -652,7 +652,7 @@ class Casualty(Procedure):
         self.effect = None
         self.decay = decay
         self.regeneration = None
-        self.blood_lust = blood_lust
+        self.blood_lust = blood_lust 
 
     def step(self, action):
 
@@ -665,12 +665,12 @@ class Casualty(Procedure):
 
         if self.roll is None:
             self.roll = DiceRoll([D6(self.game.rnd), D8(self.game.rnd)], d68=True, roll_type=RollType.CASUALTY_ROLL)
-
-            if self.blood_lust:
+            
+            if self.blood_lust: 
                 result = 38
-            else:
+            else: 
                 result = self.roll.get_sum()
-
+            
             n = min(61, max(38, result))
             self.casualty = CasualtyType(n)
             self.effect = Rules.casualty_effect[self.casualty]
@@ -1076,7 +1076,7 @@ class Half(Procedure):
 
 class Injury(Procedure):
 
-    def __init__(self, game, player, inflictor=None, foul=False, mighty_blow_used=False, dirty_player_used=False, in_crowd=False, blood_lust=False):
+    def __init__(self, game, player, inflictor=None, foul=False, mighty_blow_used=False, dirty_player_used=False, in_crowd=False, blood_lust=False):   
         super().__init__(game)
         self.player = player
         self.inflictor = inflictor
@@ -1086,7 +1086,7 @@ class Injury(Procedure):
         self.dirty_player_used = dirty_player_used
         self.ejected = False
         self.in_crowd = in_crowd
-        self.blood_lust = blood_lust
+        self.blood_lust = blood_lust 
 
     def step(self, action):
 
@@ -1575,7 +1575,7 @@ class KnockDown(Procedure):
         self.inflictor = inflictor
         self.in_crowd = in_crowd
         self.turnover = turnover
-        self.blood_lust = blood_lust
+        self.blood_lust = blood_lust 
 
     def step(self, action):
 
@@ -2054,15 +2054,15 @@ class Handoff(Procedure):
         self.pos_to = pos_to
         self.catcher = catcher
         self.eat_thrall = None
-
+        
     def step(self, action):
         if self.player.state.blood_lust and self.eat_thrall is None:
             self.eat_thrall = EatThrall(self.game, self.player)
-            return False
-
-        if self.eat_thrall is not None and self.eat_thrall.failed:
-            return True
-
+            return False 
+        
+        if self.eat_thrall is not None and self.eat_thrall.failed: 
+            return True 
+        
         self.ball.move_to(self.pos_to)
         TurnoverIfPossessionLost(self.game, self.ball)
         self.ball.move_to(self.catcher.position)
@@ -2085,7 +2085,7 @@ class PassAction(Procedure):
         self.interception_tried = False
         self.dump_off = dump_off
         self.catcher = None
-        self.eat_thrall = None
+        self.eat_thrall = None 
 
     def start(self):
         if self.dump_off:
@@ -2093,14 +2093,14 @@ class PassAction(Procedure):
         self.catcher = self.game.get_catcher(self.position)
 
     def step(self, action):
-        if self.passer.state.blood_lust and self.eat_thrall is None :
+        if self.passer.state.blood_lust and self.eat_thrall is None : 
             self.eat_thrall = EatThrall(self.game, self.passer)
-            return False
-
-        if self.eat_thrall is not None and self.eat_thrall.failed:
-            return True
-
-
+            return False 
+        
+        if self.eat_thrall is not None and self.eat_thrall.failed: 
+            return True 
+        
+        
         # Otherwise roll if player hasn't rolled
         if self.roll is None:
 
@@ -2293,17 +2293,17 @@ class EndPlayerTurn(Procedure):
         self.player = player
 
     def step(self, action):
-
-        if self.player.state.blood_lust:
+        
+        if self.player.state.blood_lust: 
             EatThrall(self.game, self.player)
             return False
-
+        
         self.player.state.used = True
         self.player.state.moves = 0
         self.game.report(Outcome(OutcomeType.END_PLAYER_TURN, player=self.player))
         self.game.state.active_player = None
         self.player.state.squares_moved.clear()
-
+        
         return True
 
 
@@ -2351,39 +2351,35 @@ class PlayerAction(Procedure):
         self.blitz_block = False
         self.turn = turn
         self.dump_off = dump_off
-
-        self.paths = None
-        self.path_steps = []
-        self.pf_enabled = False
+        
+        self.paths = None 
+        self.path_steps = [] 
 
     def start(self):
         if self.dump_off:
             self.game.add_secondary_clock(self.player.team)
-
-        agent = self.game.get_team_agent(self.player.team)
-        agent_wants_pathfinding = agent.human or (hasattr(agent, 'pathfinding') and agent.pathfinding)
-        self.pf_enabled = agent_wants_pathfinding and self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED \
-                          and not self.turn.quick_snap
 
     def step(self, action):
 
         if self.player.state.used:
             return True
 
-        if len(self.path_steps) > 0:
-
-            assert action is None
-            pos = self.path_steps.pop(0)
-
-            assert self.game.get_player_at(pos) is None
-            assert self.player.position.distance(pos) == 1
+        if len(self.path_steps) > 0: 
+            
+            assert action is None 
+            pos = self.path_steps.pop(0) 
+            
+            assert self.game.get_player_at(pos) is None 
+            assert self.player.position.distance(pos) == 1 
             action = Action(ActionType.MOVE, pos)
 
             if len(self.path_steps) == 0 and self.path_prob > 0.999 and \
                     self.game.num_tackle_zones_at(self.player, action.position) == 0 and \
                     self.game.get_ball().position != pos:
+
                 EndPlayerTurn(self.game, self.player)
 
+            
         if self.player_action_type == PlayerActionType.BLOCK and not self.player.state.up:
             assert self.player.has_skill(Skill.JUMP_UP)
             JumpUpToBlock(self.game, self.player)
@@ -2434,18 +2430,18 @@ class PlayerAction(Procedure):
             return False
 
         elif action.action_type == ActionType.MOVE:
-
-            if self.player.position.distance(action.position) > 1:
-                assert self.paths is not None
-                assert len(self.path_steps) == 0
+            
+            if self.player.position.distance( action.position ) > 1: 
+                assert self.paths is not None 
+                assert len(self.path_steps) == 0 
                 path = [p for p in self.paths if p.steps[-1] == action.position]
-
+                
                 assert len(path) == 1
                 self.path_steps = path[0].steps
                 self.path_prob = path[0].prob
 
                 return False
-
+           
             # Check GFI
             gfi = self.player.state.moves + 1 > self.player.get_ma()
 
@@ -2534,13 +2530,13 @@ class PlayerAction(Procedure):
             self.turn.pass_available = False
 
             return True
-
+            
         elif action.action_type == ActionType.HYPNOTIC_GAZE:
             EndPlayerTurn(self.game, self.player)
             target_opponent = self.game.get_player_at(action.position)
             HypnoticGaze(self.game, self.player, target_opponent)
-            return True
-
+            return True 
+            
     def available_actions(self):
 
         if self.player.state.used or len(self.path_steps) > 0:
@@ -2587,26 +2583,24 @@ class PlayerAction(Procedure):
 
                 # Path finding
                 # TODO: add option for non human actors to get path finding
-                if self.pf_enabled and self.player.state.up:
-                    self.paths = [p for p in
-                                  get_all_paths(self.game, self.player, pf_option=self.game.config.pathfinding) if
-                                  p.steps[-1].distance(self.player.position) > 1]
-                    for p in self.paths:
+                if self.game.get_team_agent(self.player.team).human and self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up:
+                    self.paths = [p for p in get_all_paths(self.game, self.player, pf_option = self.game.config.pathfinding) if p.steps[-1].distance(self.player.position) > 1]
+                    for p in self.paths: 
                         sq = p.steps[-1]
                         move_positions.append(sq)
-
+                        
                         rolls = []
-                        for roll in p.rolls:
+                        for roll in p.rolls: 
                             rolls.extend(roll)
-
+                        
                         ball_at = self.game.get_ball_at(sq)
                         if ball_at is not None and ball_at.on_ground:
                             target = Rules.agility_table[self.player.get_ag()]
                             modifiers = self.game.get_pickup_modifiers(self.player, sq)
                             rolls.append(min(6, max(2, target - modifiers)))
-
-                        agi_rolls.append(rolls)
-
+                        
+                        agi_rolls.append( rolls )
+                        
                 if len(move_positions) > 0:
                     actions.append(ActionChoice(ActionType.MOVE, team=self.player.team,
                                                 positions=move_positions, agi_rolls=agi_rolls))
@@ -2731,23 +2725,23 @@ class PlayerAction(Procedure):
             if len(positions) > 0:
                 actions.append(ActionChoice(ActionType.PASS, team=self.player.team,
                                             positions=positions, agi_rolls=agi_rolls))
-
+        
         # Hypnotic gaze action 
         if self.player.has_skill(Skill.HYPNOTIC_GAZE) and  self.player.state.up and \
-                self.player_action_type == PlayerActionType.MOVE:
-
+                self.player_action_type == PlayerActionType.MOVE: 
+            
             hypno_positions = self.game.get_hypno_targets(self.player)
-
+            
             if len(hypno_positions) > 0:
                 modifier = self.game.get_hypno_modifier(self.player)
                 target = Rules.agility_table[self.player.get_ag()]
                 agi_roll = min(6, max(2, target - modifier))
                 agi_rolls = [[agi_roll]] * len(hypno_positions)
 
-                actions.append(ActionChoice(ActionType.HYPNOTIC_GAZE, team=self.player.team,
-                                            skill=Skill.HYPNOTIC_GAZE, positions=hypno_positions,
+                actions.append(ActionChoice(ActionType.HYPNOTIC_GAZE, team=self.player.team, 
+                                            skill=Skill.HYPNOTIC_GAZE, positions=hypno_positions, 
                                             agi_rolls=agi_rolls))
-
+        
         if self.dump_off:
             actions.append(ActionChoice(ActionType.DONT_USE_SKILL, team=self.player.team, skill=Skill.DUMP_OFF))
         else:
@@ -3331,22 +3325,22 @@ class Touchdown(Procedure):
     def __init__(self, game, player):
         super().__init__(game)
         self.player = player
-        self.handle_bloodlust = False
-        self.eat_thrall = None
-
-    def start(self):
-        self.handle_bloodlust = self.player == self.game.get_active_player() and self.player.state.blood_lust
+        self.handle_bloodlust = False 
+        self.eat_thrall = None 
+        
+    def start(self): 
+        self.handle_bloodlust = self.player == self.game.get_active_player() and self.player.state.blood_lust 
 
     def step(self, action):
-        if self.handle_bloodlust:
-
-            if self.eat_thrall is None:
+        if self.handle_bloodlust: 
+                
+            if self.eat_thrall is None: 
                 self.eat_thrall = EatThrall(self.game, self.player)
-                return None
-
-            if self.eat_thrall.failed:
-                return True
-
+                return None 
+            
+            if self.eat_thrall.failed: 
+                return True 
+        
         self.game.report(Outcome(OutcomeType.TOUCHDOWN, team=self.player.team, player=self.player))
         self.player.team.state.score += 1
         self.game.state.kicking_this_drive = self.player.team
@@ -3451,7 +3445,7 @@ class Turn(Procedure):
         if player.has_skill(Skill.TAKE_ROOT) and not player.state.taken_root:
             TakeRoot(self.game, player, player_action)
         if player.has_skill(Skill.BLOOD_LUST):
-            BloodLust(self.game, player, player_action)
+            BloodLust(self.game, player, player_action) 
 
     def step(self, action):
         # Update state
@@ -3477,21 +3471,21 @@ class Turn(Procedure):
                 self.game.report(Outcome(OutcomeType.END_OF_TURN, team=self.team))
             self.game.state.active_player = None
             EndTurn(self.game)
-
+            
             return True
 
-        if action.player.state.hypnotized and action.action_type in [ActionType.START_MOVE,
-                                                                     ActionType.START_BLITZ,
-                                                                     ActionType.START_FOUL,
-                                                                     ActionType.START_PASS,
-                                                                     ActionType.START_HANDOFF,
-                                                                     ActionType.START_BLOCK]:
-            action.player.state.hypnotized = False
-
-
-
-
-
+        if action.player.state.hypnotized and action.action_type in [ActionType.START_MOVE, 
+                                                                     ActionType.START_BLITZ, 
+                                                                     ActionType.START_FOUL, 
+                                                                     ActionType.START_PASS, 
+                                                                     ActionType.START_HANDOFF, 
+                                                                     ActionType.START_BLOCK]: 
+            action.player.state.hypnotized = False 
+            
+            
+            
+            
+            
         # Start movement action
         if action.action_type == ActionType.START_MOVE:
             self.start_player_action(OutcomeType.MOVE_ACTION_STARTED, PlayerActionType.MOVE, action.player)
@@ -3785,7 +3779,7 @@ class BloodLust(Negatrait):
         self.skill = Skill.BLOOD_LUST
         self.success_outcome = OutcomeType.SUCCESSFUL_BLOOD_LUST
         self.fail_outcome = OutcomeType.FAILED_BLOOD_LUST
-
+        
     def get_target(self):
         return 2
 
@@ -3797,7 +3791,7 @@ class BloodLust(Negatrait):
 
     def remove_fail_state(self):
         pass  # blood lust is removed by EatThrall-procedure 
-
+        
 
 class Reroll(Procedure):
 
@@ -4056,82 +4050,82 @@ class Loner(Procedure):
             return True
 
 
-class EatThrall(Procedure):
+class EatThrall(Procedure): 
     def __init__(self, game, player):
         super().__init__(game)
-        self.player = player
-        self.victim = None
-        self.failed = None
-
-    def start(self):
+        self.player = player 
+        self.victim = None 
+        self.failed = None 
+        
+    def start(self): 
         self.victim_pos = self.game.get_adjacent_blood_lust_victims(self.player)
-
-    def step(self, action):
-        if len(self.victim_pos)==0:
+        
+    def step(self, action): 
+        if len(self.victim_pos)==0: 
             Turnover(self.game)
-
+            
             ball = self.game.get_ball_at(self.player.position)
-            if ball is not None:
+            if ball is not None: 
                 Bounce(self.game, ball)
-
+            
             self.game.pitch_to_reserves(self.player)
             self.game.report(Outcome(OutcomeType.EJECTED_BY_BLOOD_LUST, player=self.player))
-
-            self.failed = True
-
-        else:
-            self.victim = self.game.get_player_at(action.position)
-            #set_trace()
+            
+            self.failed = True 
+            
+        else: 
+            self.victim = self.game.get_player_at(action.position)  
+            #set_trace() 
             self.game.report(Outcome(OutcomeType.EATEN_DURING_BLOOD_LUST, player=self.victim, opp_player=self.player))
             KnockDown(self.game, self.victim, armor_roll=False, injury_roll=True)
-            self.failed = False
-
-        return True
-
-    def end(self):
+            self.failed = False 
+            
+        return True 
+        
+    def end(self): 
         self.player.state.blood_lust = False
+        
+    def available_actions(self): 
+        if len(self.victim_pos)>0: 
+            return [ActionChoice(ActionType.SELECT_PLAYER, positions=self.victim_pos, team=self.player.team)] 
+        else: 
+            return [] 
 
-    def available_actions(self):
-        if len(self.victim_pos)>0:
-            return [ActionChoice(ActionType.SELECT_PLAYER, positions=self.victim_pos, team=self.player.team)]
-        else:
-            return []
 
-
-class HypnoticGaze(Procedure):
-    def __init__(self, game, player, target_player):
+class HypnoticGaze(Procedure): 
+    def __init__(self, game, player, target_player): 
         super().__init__(game)
         self.player = player
-        self.target_player = target_player
+        self.target_player = target_player 
         self.roll = None
-        self.reroll = None
-
-    def start(self):
-        pass
-
-    def step(self, action):
-        if self.roll is None:
+        self.reroll = None 
+        
+    def start(self): 
+        pass 
+    
+    def step(self, action): 
+        if self.roll is None: 
             #agility roll with tz modifiers except target_player
             self.roll = DiceRoll([D6(self.game.rnd)], roll_type=RollType.AGILITY_ROLL)
             self.roll.modifiers = self.game.get_hypno_modifier(self.player)
             self.roll.target = Rules.agility_table[self.player.get_ag()]
-
-            if self.roll.is_d6_success():
+            
+            if self.roll.is_d6_success(): 
                 self.game.report(Outcome(OutcomeType.SUCCESSFUL_HYPNOTIC_GAZE, player=self.player, rolls=[self.roll]))
-                self.target_player.state.hypnotized = True
-                return True
-
+                self.target_player.state.hypnotized = True 
+                return True 
+            
             self.game.report(Outcome(OutcomeType.FAILED_HYPNOTIC_GAZE, player=self.player, rolls=[self.roll]))
             self.reroll = Reroll(self.game, self.player, self)
-            return False
-
-
-        assert self.reroll is not None
-
-        if self.reroll.use_reroll:
-            self.roll = None
-            self.reroll = None
-            return False
-
-        return True
+            return False 
+        
+        
+        assert self.reroll is not None 
+        
+        if self.reroll.use_reroll: 
+            self.roll = None 
+            self.reroll = None 
+            return False 
+        
+        return True 
 
