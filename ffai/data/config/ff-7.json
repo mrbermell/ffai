@@ -21,5 +21,6 @@
         "secondary": 10,
         "init": 10,
         "end": 10
-    }
+    },
+    "pathfinding": "not enabled"
 }

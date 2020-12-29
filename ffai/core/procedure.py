@@ -9,6 +9,7 @@ before other procedures are run. Procedures can add other procedures to the stac
 """
 from abc import abstractmethod, ABCMeta
 
+from ffai.ai.pathfinding import get_all_paths 
 from ffai.core.model import *
 from ffai.core.table import *
 import time
@@ -2350,6 +2351,9 @@ class PlayerAction(Procedure):
         self.blitz_block = False
         self.turn = turn
         self.dump_off = dump_off
+        
+        self.paths = None 
+        self.path_steps = [] 
 
     def start(self):
         if self.dump_off:
@@ -2360,6 +2364,22 @@ class PlayerAction(Procedure):
         if self.player.state.used:
             return True
 
+        if len(self.path_steps) > 0: 
+            
+            assert action is None 
+            pos = self.path_steps.pop(0) 
+            
+            assert self.game.get_player_at(pos) is None 
+            assert self.player.position.distance(pos) == 1 
+            action = Action(ActionType.MOVE, pos)
+
+            if len(self.path_steps) == 0 and self.path_prob > 0.999 and \
+                    self.game.num_tackle_zones_at(self.player, action.position) == 0 and \
+                    self.game.get_ball().position != pos:
+
+                EndPlayerTurn(self.game, self.player)
+
+            
         if self.player_action_type == PlayerActionType.BLOCK and not self.player.state.up:
             assert self.player.has_skill(Skill.JUMP_UP)
             JumpUpToBlock(self.game, self.player)
@@ -2410,7 +2430,18 @@ class PlayerAction(Procedure):
             return False
 
         elif action.action_type == ActionType.MOVE:
+            
+            if self.player.position.distance( action.position ) > 1: 
+                assert self.paths is not None 
+                assert len(self.path_steps) == 0 
+                path = [p for p in self.paths if p.steps[-1] == action.position]
+                
+                assert len(path) == 1
+                self.path_steps = path[0].steps
+                self.path_prob = path[0].prob
 
+                return False
+           
             # Check GFI
             gfi = self.player.state.moves + 1 > self.player.get_ma()
 
@@ -2508,7 +2539,7 @@ class PlayerAction(Procedure):
             
     def available_actions(self):
 
-        if self.player.state.used:
+        if self.player.state.used or len(self.path_steps) > 0:
             return []
 
         actions = []
@@ -2549,6 +2580,27 @@ class PlayerAction(Procedure):
                             modifiers = self.game.get_pickup_modifiers(self.player, square)
                             rolls.append(min(6, max(2, target - modifiers)))
                     agi_rolls.append(rolls)
+
+                # Path finding
+                # TODO: add option for non human actors to get path finding
+                if self.game.get_team_agent(self.player.team).human and self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up:
+                    self.paths = [p for p in get_all_paths(self.game, self.player, pf_option = self.game.config.pathfinding) if p.steps[-1].distance(self.player.position) > 1]
+                    for p in self.paths: 
+                        sq = p.steps[-1]
+                        move_positions.append(sq)
+                        
+                        rolls = []
+                        for roll in p.rolls: 
+                            rolls.extend(roll)
+                        
+                        ball_at = self.game.get_ball_at(sq)
+                        if ball_at is not None and ball_at.on_ground:
+                            target = Rules.agility_table[self.player.get_ag()]
+                            modifiers = self.game.get_pickup_modifiers(self.player, sq)
+                            rolls.append(min(6, max(2, target - modifiers)))
+                        
+                        agi_rolls.append( rolls )
+                        
                 if len(move_positions) > 0:
                     actions.append(ActionChoice(ActionType.MOVE, team=self.player.team,
                                                 positions=move_positions, agi_rolls=agi_rolls))

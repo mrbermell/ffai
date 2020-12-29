@@ -23,5 +23,6 @@
         "disqualification": 1000,
         "init": 10,
         "end": 10
-    }
+    },
+    "pathfinding": "single roll paths"
 }

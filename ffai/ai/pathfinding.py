@@ -8,22 +8,23 @@ This module contains pathfinding functionalities for FFAI.
 
 from typing import Optional, List
 from ffai.core.model import Player, Square
-from ffai.core.table import Skill, WeatherType, Tile
-from ffai.core.game import Game
+from ffai.core.table import Skill, WeatherType, Tile, PathFindingOptions
 import time
 import copy
 from functools import lru_cache
 import numpy as np
 
+from pytest import set_trace 
 
 class Path:
 
-    def __init__(self, steps: List['Square'], prob: float):
+    def __init__(self, steps: List['Square'], prob: float, rolls=[]):
         self.steps = steps
         self.prob = prob
         self.dodge_used_prob: float = 0
         self.sure_feet_used_prob: float = 0
         self.rr_used_prob: float = 0
+        self.rolls = rolls 
 
     def __len__(self) -> int:
         return len(self.steps)
@@ -55,6 +56,8 @@ class Node:
             self.sure_feet_used_prob: float = 0
             self.rr_used_prob: float = 0
         self.update_costs()
+        
+        self.rolls = []
 
     def update_costs(self):
         self.costs[0] = round(1-self.prob, 2)
@@ -67,7 +70,7 @@ class Node:
         self.moves += moves
         self.costs[1] = self.moves
 
-    def add_dodge_prob(self, p:float, dodge_skill=False, rr=False):
+    def add_dodge_prob(self, p:float, dodge_skill=False, rr=False, roll=[]):
         can_use_dodge_p = 0 if not dodge_skill else 1 - self.dodge_used_prob
         assert can_use_dodge_p <= 1
         dodge_used_now_p = (1-p) * can_use_dodge_p
@@ -86,8 +89,10 @@ class Node:
         self.dodge_used_prob += success_skill
         self.rr_used_prob += success_reroll
         self.costs[0] = round(1-self.prob, 2)
+        
+        self.rolls.append(roll) 
 
-    def add_gfi_prob(self, p:float, sure_feet_skill=False, rr=False):
+    def add_gfi_prob(self, p:float, sure_feet_skill=False, rr=False, roll=[]):
         can_use_sure_feet_p = 0 if not sure_feet_skill else 1 - self.sure_feet_used_prob
         assert can_use_sure_feet_p <= 1
         sure_feet_used_now_p = (1 - p) * can_use_sure_feet_p
@@ -107,6 +112,7 @@ class Node:
         self.rr_used_prob += success_reroll
         self.costs[0] = round(1-self.prob, 2)
 
+        self.rolls.append(roll)
 
 class SortedList:
 
@@ -176,7 +182,7 @@ class ParetoFrontier:
 
 class Pathfinder:
 
-    def __init__(self, game, player, position=None, target_x=None, target_player=None, allow_rr=False, blitz=False, max_moves=None, all=False):
+    def __init__(self, game, player, position=None, target_x=None, target_player=None, allow_rr=False, blitz=False, max_moves=None, all=False, pf_option=None):
         self.game = game
         self.player = player
         self.position = position
@@ -189,10 +195,11 @@ class Pathfinder:
         self.pareto_frontiers = {}
         self.best = None
         self.openset = SortedList(lambda x: x.prob)
+        
         self.max_moves = max_moves
         # Max search depth
         if self.max_moves is None:
-            self.ma = self.player.get_ma()
+            self.ma = self.player.num_moves_left(include_gfi=False)
             self.max_moves = self.player.num_moves_left()
         else:
             self.ma = self.max_moves
@@ -208,16 +215,23 @@ class Pathfinder:
             assert self.target_x is None or (self.position is None and self.target_player is None)
             assert self.target_player is None or (
                         self.position is None and self.target_x is None and self.target_player.position is not None)
-
+        
+        self.pf_option = PathFindingOptions.ALL_PATHS if pf_option is None else pf_option  
+        
+        
     def _collect_path(self, node):
         steps = []
+        rolls = [] 
         n = node
         while n is not None:
             steps.append(n.position)
+            rolls.append(n.rolls) 
             n = n.parent
         steps.reverse()
+        rolls.reverse() 
         steps = steps[1:]
-        path = Path(steps, prob=node.prob)
+        rolls = rolls[1:]
+        path = Path(steps, prob=node.prob, rolls = rolls)
         path.dodge_used_prob = node.dodge_used_prob
         path.sure_feet_used_prob = node.sure_feet_used_prob
         path.rr_used_prob = node.rr_used_prob
@@ -272,9 +286,10 @@ class Pathfinder:
                                                                                                   skill=Skill.TACKLE)
         can_use_rr = self.allow_rr and self.game.can_use_reroll(self.player.team)
         if node.moves > self.ma:
-            node.add_gfi_prob(5 / 6, sure_feet_skill=self.player.has_skill(Skill.SURE_FEET), rr=can_use_rr)
+            node.add_gfi_prob(5 / 6, sure_feet_skill=self.player.has_skill(Skill.SURE_FEET), rr=can_use_rr, roll=2)
         if dodge_p < 1.0:
-            node.add_dodge_prob(dodge_p, dodge_skill=can_use_dodge, rr=can_use_rr)
+            roll = self.game.get_dodge_roll_from(self.player, from_position=current.position, to_position=neighbour )
+            node.add_dodge_prob(dodge_p, dodge_skill=can_use_dodge, rr=can_use_rr, roll=roll)
         return node
 
     def _add_blitz(self, node):
@@ -350,6 +365,9 @@ class Pathfinder:
             if not self._can_beat_best(current):
                 continue
 
+            if self.game.get_ball_at(current.position) is not None and self.player.position != current.position: 
+                continue 
+            
             # Expand
             for neighbour in self.game.get_adjacent_squares(current.position, occupied=False):
 
@@ -358,7 +376,10 @@ class Pathfinder:
 
                 # Make expanded node
                 node = self._get_child(current, neighbour)
-
+                
+                if self.pf_option == PathFindingOptions.NO_ROLL_PATHS and node.prob < 0.999: 
+                    continue 
+                
                 # If a potential blitz position, copy node and add to blitzes
                 if self.all and \
                             self.blitz and \
@@ -389,6 +410,9 @@ class Pathfinder:
 
                     # No moves left
                     if current.moves == self.max_moves:
+                        continue
+
+                    if self.pf_option == PathFindingOptions.SINGLE_ROLL_PATHS and current.prob < 0.999 and current.prob > node.prob+0.0001:
                         continue
 
                     # Add to pareto frontier
@@ -503,7 +527,7 @@ def get_safest_path_to_player(game, player, target_player, from_position=None, a
     return path
 
 
-def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num_moves_used=None, blitz=False):
+def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num_moves_used=None, blitz=False, pf_option=None):
     """
     :param game:
     :param player: the player to move
@@ -511,12 +535,11 @@ def get_all_paths(game, player, from_position=None, allow_team_reroll=False, num
     :param num_moves_used: the number of moves already used by the player. If None, it will use the player's current number of used moves.
     :param allow_team_reroll: allow team rerolls to be used.
     :param blitz: only finds blitz moves if True.
-    :return a path containing the list of squares that forms the safest (and thereafter shortest) path for the given player to
-    a position that is adjacent to the other player and the probability of success.
+    :return a list of optimal probability paths to all squares that the given player can reach
     """
     if from_position is not None and num_moves_used != 0:
         orig_player, orig_ball = _alter_state(game, player, from_position, num_moves_used)
-    finder = Pathfinder(game, player, allow_rr=allow_team_reroll, blitz=blitz, all=True)
+    finder = Pathfinder(game, player, allow_rr=allow_team_reroll, blitz=blitz, all=True, pf_option=pf_option)
     paths = finder.get_paths()
     if from_position is not None and num_moves_used != 0:
         _reset_state(game, player, orig_player, orig_ball)
