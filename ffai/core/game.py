@@ -2110,5 +2110,7 @@ class Game:
         """
         return 1 - self.num_tackle_zones_in(player) 
         
-
+    def team_pathfinding_enabled(self, team):
+        agent = self.get_team_agent(team)
+        return agent.human or agent.needs_pathfinding
         

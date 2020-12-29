@@ -217,6 +217,7 @@ class Agent:
             self.agent_id = str(uuid.uuid1())
         self.name = name
         self.human = human
+        self.needs_pathfinding = False #to be set by subclass
 
     def to_json(self):
         return {
