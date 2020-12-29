@@ -3486,7 +3486,7 @@ class Turn(Procedure):
                                                                      ActionType.START_PASS,
                                                                      ActionType.START_HANDOFF,
                                                                      ActionType.START_BLOCK]:
-            action.player.state.hypnotized = True
+            action.player.state.hypnotized = False
 
 
 
