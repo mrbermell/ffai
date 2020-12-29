@@ -4133,5 +4133,5 @@ class HypnoticGaze(Procedure):
             self.reroll = None
             return False
 
-        return True
+
 
