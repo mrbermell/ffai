@@ -2353,7 +2353,10 @@ class PlayerAction(Procedure):
         self.dump_off = dump_off
         
         self.paths = None 
-        self.path_steps = [] 
+        self.path_steps = []
+        self.pathfinding_enabled = game.team_pathfinding_enabled(player.team) and \
+                                   game.config.pathfinding != PathFindingOptions.NOT_ENABLED and \
+                                   not turn.quick_snap
 
     def start(self):
         if self.dump_off:
@@ -2582,9 +2585,10 @@ class PlayerAction(Procedure):
                     agi_rolls.append(rolls)
 
                 # Path finding
-                # TODO: add option for non human actors to get path finding
-                if self.game.get_team_agent(self.player.team).human and self.game.config.pathfinding != PathFindingOptions.NOT_ENABLED and not self.turn.quick_snap and self.player.state.up:
-                    self.paths = [p for p in get_all_paths(self.game, self.player, pf_option = self.game.config.pathfinding) if p.steps[-1].distance(self.player.position) > 1]
+                if self.pathfinding_enabled and self.player.state.up:
+                    self.paths = [p for p in
+                                  get_all_paths(self.game, self.player, pf_option=self.game.config.pathfinding)
+                                  if p.steps[-1].distance(self.player.position) > 1]
                     for p in self.paths: 
                         sq = p.steps[-1]
                         move_positions.append(sq)
@@ -2599,7 +2603,7 @@ class PlayerAction(Procedure):
                             modifiers = self.game.get_pickup_modifiers(self.player, sq)
                             rolls.append(min(6, max(2, target - modifiers)))
                         
-                        agi_rolls.append( rolls )
+                        agi_rolls.append(rolls)
                         
                 if len(move_positions) > 0:
                     actions.append(ActionChoice(ActionType.MOVE, team=self.player.team,

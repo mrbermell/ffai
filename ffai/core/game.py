@@ -2112,7 +2112,11 @@ class Game:
         :return:  modifier for player to hypnotize target. 
         """
         return 1 - self.num_tackle_zones_in(player) 
-        
+
+    def team_pathfinding_enabled(self, team):
+        agent = self.get_team_agent(team)
+        return agent.human or agent.needs_pathfinding
+
 
     def get_home_in_lead(self): 
         if self.state.home_team.state.score > self.state.away_team.state.score: 
@@ -2121,4 +2125,5 @@ class Game:
             return -1 
         else: 
             return 0 
+
         
