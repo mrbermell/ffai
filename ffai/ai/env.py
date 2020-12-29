@@ -16,6 +16,7 @@ import tkinter as tk
 import math
 from copy import deepcopy
 
+from pytest import set_trace 
 
 class FFAIEnv(gym.Env):
 
@@ -87,7 +88,6 @@ class FFAIEnv(gym.Env):
         ActionType.KICK,
         ActionType.RECEIVE,
         ActionType.END_SETUP,
-        ActionType.END_PLAYER_TURN,
         ActionType.USE_REROLL,
         ActionType.DONT_USE_REROLL,
         ActionType.USE_SKILL,
@@ -131,7 +131,8 @@ class FFAIEnv(gym.Env):
         ActionType.START_BLITZ,
         ActionType.START_PASS,
         ActionType.START_FOUL,
-        ActionType.START_HANDOFF
+        ActionType.START_HANDOFF,
+        ActionType.END_PLAYER_TURN
     ]
 
     # Procedures that require actions
@@ -177,6 +178,8 @@ class FFAIEnv(gym.Env):
         self.last_ball_x = None
         self.own_team = None
         self.opp_team = None
+
+        self.lecture = None
 
         self.layers = [
             OccupiedLayer(),
@@ -225,7 +228,7 @@ class FFAIEnv(gym.Env):
             'y': spaces.Discrete(arena.height)
         })
 
-    def step(self, action):
+    def step(self, action, skip_obs=False):
         if type(action['action-type']) is ActionType and action['action-type'] in FFAIEnv.actions:
             action_type = action['action-type']
         else:
@@ -237,9 +240,9 @@ class FFAIEnv(gym.Env):
             position = p
         real_action = Action(action_type=action_type, position=position, player=player)
         self.last_report_idx = len(self.game.state.reports)
-        return self._step(real_action)
+        return self._step(real_action, skip_obs)
 
-    def _step(self, action):
+    def _step(self, action, skip_obs=False):
         self.game.step(action)
         if action.action_type in FFAIEnv.offensive_formation_action_types or action.action_type in FFAIEnv.defensive_formation_action_types:
             self.game.step(Action(ActionType.END_SETUP))
@@ -270,7 +273,18 @@ class FFAIEnv(gym.Env):
             'round': self.game.state.round,
             'ball_progression': progression
         }
-        return self._observation(self.game), reward, self.game.state.game_over, info
+        
+        # End epside after first drive 
+        done = self.game.state.game_over or team.state.score>0 or opp_team.state.score>0 or self.game.state.half>1 
+        
+        lect_outcome = None 
+        if self.lecture is not None: 
+            lect_outcome = self.lecture.evaluate(self.game, drive_over=done)
+        
+        if skip_obs:
+            return None, reward, done, info, lect_outcome
+        else:
+            return self._observation(self.game), reward, done, info, lect_outcome
 
     def seed(self, seed=None):
         if seed is None:
@@ -386,27 +400,44 @@ class FFAIEnv(gym.Env):
 
         return obs
 
-    def reset(self):
+    def reset(self, lecture=None, skip_obs=False):
         self.team_id = self.home_team.team_id
         home_agent = self.actor
         away_agent = self.opp_actor
         seed = self.rnd.randint(0, 2**31)
-        self.game = Game(game_id=str(uuid.uuid1()),
-                         home_team=deepcopy(self.home_team),
-                         away_team=deepcopy(self.away_team),
-                         home_agent=home_agent,
-                         away_agent=away_agent,
-                         config=self.config,
-                         ruleset=self.ruleset,
-                         seed=seed)
+        uid = str(uuid.uuid1())
+        
+        if lecture is not None: 
+            self.lecture = lecture 
+            self.game = lecture.reset_game(config=self.config)
+            self.game.set_seed(seed)
+            self.game.set_available_actions() 
+            self.actor = self.game.home_agent
+            self.opp_actor = self.game.away_agent
+        else: 
+            self.game = Game(game_id=uid,
+                             home_team=deepcopy(self.home_team),
+                             away_team=deepcopy(self.away_team),
+                             home_agent=home_agent,
+                             away_agent=away_agent,
+                             config=self.config,
+                             ruleset=self.ruleset,
+                             seed=seed)
+        
         self.last_report_idx = len(self.game.state.reports)
         self.last_ball_team = None
         self.last_ball_x = None
-        self.game.init()
+        
+        if lecture is None: 
+            self.game.init() 
+        
         self.own_team = self.game.get_agent_team(self.actor)
         self.opp_team = self.game.get_agent_team(self.opp_actor)
 
-        return self._observation(self.game)
+        if skip_obs:
+            return None
+        else:
+            return self._observation(self.game)
 
     def get_outcomes(self):
         if self.last_report_idx == len(self.game.state.reports):
@@ -632,3 +663,18 @@ class FFAIEnv(gym.Env):
         self.root = None
         self.cv = None
 
+    def get_action_shape(self): 
+        board_shape = self.observation_space.spaces['board'].shape
+        squares = board_shape[1] * board_shape[2]
+        return len(FFAIEnv.simple_action_types) + len(FFAIEnv.defensive_formation_action_types) + len(FFAIEnv.offensive_formation_action_types)  + squares * len(FFAIEnv.positional_action_types)
+        
+    def get_spatial_obs_shape(self): 
+        spatial_obs_space = self.observation_space.spaces['board'].shape
+        return spatial_obs_space
+        
+    def get_non_spatial_obs_shape(self): 
+        obs = self.observation_space.spaces
+        non_spatial_obs_space = obs['state'].shape[0] + obs['procedures'].shape[0] + obs['available-action-types'].shape[0]
+        return (1, non_spatial_obs_space) 
+        
+        

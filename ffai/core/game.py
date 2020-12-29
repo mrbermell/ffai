@@ -1899,15 +1899,16 @@ class Game:
                 else [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS, PassDistance.LONG_PASS, PassDistance.LONG_BOMB]
         if self.state.weather == WeatherType.BLIZZARD:
             distances_allowed = [PassDistance.QUICK_PASS, PassDistance.SHORT_PASS]
-        for y in range(len(self.state.pitch.board)):
-            for x in range(len(self.state.pitch.board[y])):
-                to_position = Square(x, y)
-                if self.is_out_of_bounds(to_position) or position == to_position:
-                    continue
-                distance = self.get_pass_distance(position, to_position)
-                if distance in distances_allowed:
-                    squares.append(to_position)
-                    distances.append(distance)
+        # for y in range(len(self.state.pitch.board)):
+            # for x in range(len(self.state.pitch.board[y])):
+        for team_mate in self.get_players_on_pitch(passer.team, up=True):
+
+            if self.is_out_of_bounds(team_mate.position) or team_mate == passer:
+                continue
+            distance = self.get_pass_distance(position, team_mate.position)
+            if distance in distances_allowed:
+                squares.append(team_mate.position)
+                distances.append(distance)
         return squares, distances
 
     def get_pass_distance(self, from_position, to_position):
@@ -2104,13 +2105,25 @@ class Game:
                     if o.has_tackle_zone() ]
                 
     def get_hypno_modifier(self, player): 
+    
+    
         """
         :param player: player on the board with hypnotic gaze skill. 
         :return:  modifier for player to hypnotize target. 
         """
         return 1 - self.num_tackle_zones_in(player) 
-        
+
     def team_pathfinding_enabled(self, team):
         agent = self.get_team_agent(team)
         return agent.human or agent.needs_pathfinding
+
+
+    def get_home_in_lead(self): 
+        if self.state.home_team.state.score > self.state.away_team.state.score: 
+            return 1 
+        elif self.state.home_team.state.score < self.state.away_team.state.score: 
+            return -1 
+        else: 
+            return 0 
+
         
