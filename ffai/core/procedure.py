@@ -652,7 +652,7 @@ class Casualty(Procedure):
         self.effect = None
         self.decay = decay
         self.regeneration = None
-        self.blood_lust = blood_lust +1
+        self.blood_lust = blood_lust
 
     def step(self, action):
 
