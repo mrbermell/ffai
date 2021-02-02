@@ -1620,15 +1620,21 @@ class Game:
         """
         return self.num_block_dice_at(attacker, defender, attacker.position, blitz, dauntless_success)
 
-    def get_block_probs(self, attacker, defender):
+    def get_block_probs(self, attacker, defender, n=None):
         """
         :param attacker:
         :param defender:
         :return: a tuple containing the knock-down probabilities of the attacker and defender.
         """
-        dice = self.num_block_dice(attacker, defender)
-        push_squares = self.get_push_squares(attacker.position, defender.position)
-        crowd_push = self.arena.board[push_squares[0].y][push_squares[0].x] == Tile.CROWD and not defender.has_skill(Skill.STAND_FIRM)
+
+        if n is None:
+            dice = self.num_block_dice(attacker, defender)
+            push_squares = self.get_push_squares(attacker.position, defender.position)
+            crowd_push = self.arena.board[push_squares[0].y][push_squares[0].x] == Tile.CROWD and not defender.has_skill(Skill.STAND_FIRM)
+        else:
+            dice=n
+            crowd_push=False
+
         p_self = 1.0 / 6.0 if attacker.has_skill(Skill.BLOCK) else 2.0 / 6.0
         p_opp = 2.0 / 6.0 if attacker.has_skill(Skill.BLOCK) else 2.0 / 6.0
         if crowd_push:

@@ -429,8 +429,9 @@ class Block(Procedure):
             for i in range(abs(dice)):
                 self.roll.dice.append(BBDie(self.game.rnd))
 
+
             self.game.report(Outcome(OutcomeType.BLOCK_ROLL, player=self.attacker, opp_player=self.defender,
-                                     rolls=[self.roll]))
+                                     rolls=[self.roll], n=dice))
 
             # check for re-roll
             self.reroll = Reroll(self.game, self.attacker, context=self)
