@@ -214,7 +214,7 @@ class FFAIEnv(gym.Env):
 
         self.observation_space = spaces.Dict({
             'board': spaces.Box(low=0, high=1, shape=(len(self.layers), arena.height, arena.width)),
-            'state': spaces.Box(low=0, high=1, shape=(50,)),
+            'state': spaces.Box(low=0, high=1, shape=(55,)),
             'procedures': spaces.Box(low=0, high=1, shape=(len(FFAIEnv.procedures),)),
             'available-action-types': spaces.Box(low=0, high=1, shape=(len(FFAIEnv.actions),))
         })
@@ -358,6 +358,14 @@ class FFAIEnv(gym.Env):
         obs['state']['is pass action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.PASS else 0.0
         obs['state']['is handoff action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.HANDOFF else 0.0
         obs['state']['is foul action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.FOUL else 0.0
+
+        roll, num_dice = self.game.get_block_dice_rolls()
+        obs['state']['block dice attacker down'] = 1.0 if roll is not None and roll.contains(BBDieResult.ATTACKER_DOWN) else 0.0
+        obs['state']['block dice both down'] = 1.0 if roll is not None and roll.contains(BBDieResult.BOTH_DOWN) else 0.0
+        obs['state']['block dice push'] = 1.0 if roll is not None and roll.contains(BBDieResult.PUSH) else 0.0
+        obs['state']['block dice defender stumbles'] = 1.0 if roll is not None and roll.contains(BBDieResult.DEFENDER_STUMBLES) else 0.0
+        obs['state']['block dice defender down'] = 1.0 if roll is not None and roll.contains(BBDieResult.DEFENDER_DOWN) else 0.0
+        obs['state']['num block dice'] = (num_dice + 3)/6 if num_dice is not None else 0.0
 
         # Procedure
         for procedure in FFAIEnv.procedures:

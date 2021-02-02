@@ -2099,5 +2099,18 @@ class Game:
         """
         return 1 - self.num_tackle_zones_in(player) 
         
+    def get_block_dice_rolls(self):
+        """
+        :return: Returns a tuple (dice, num_dice) where
+            dice is the dice outcome of a block roll e.g. BOTH_DOWN, POW
+            num_dice is the number of dice rolled, integer in the range [-3,-2,1,2,3]
+        """
+
+        proc = self.get_procedure()
+        if isinstance(proc, Block):
+            if proc.roll is not None:
+                return proc.roll, proc.num_dice
+
+        return None, None
 
         

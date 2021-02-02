@@ -312,6 +312,7 @@ class Block(Procedure):
         self.attacker = attacker
         self.defender = defender
         self.roll = None
+        self.num_dice = None
         self.reroll = None
         self.blitz = blitz
         self.gfi = gfi
@@ -418,14 +419,14 @@ class Block(Procedure):
             if self.blitz and self.attacker.has_skill(Skill.HORNS):
                 self.game.report(Outcome(OutcomeType.SKILL_USED, player=self.attacker, skill=Skill.HORNS))
 
-            dice = self.game.num_block_dice(self.attacker, self.defender, blitz=self.blitz,
+            self.num_dice = self.game.num_block_dice(self.attacker, self.defender, blitz=self.blitz,
                                             dauntless_success=self.dauntless_success)
-            self.favor = self.attacker.team if dice > 0 else self.defender.team
+            self.favor = self.attacker.team if self.num_dice > 0 else self.defender.team
 
             # Roll
             self.roll = DiceRoll([], roll_type=RollType.BLOCK_ROLL)
 
-            for i in range(abs(dice)):
+            for i in range(abs(self.num_dice)):
                 self.roll.dice.append(BBDie(self.game.rnd))
 
             self.game.report(Outcome(OutcomeType.BLOCK_ROLL, player=self.attacker, opp_player=self.defender,
