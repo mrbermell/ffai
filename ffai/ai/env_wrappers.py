@@ -10,7 +10,7 @@ import numpy as np
 def make_wrapped_env(**kwargs):
     env = FFAIEnv(**kwargs)
     env = FFAI_actionWrapper(env)
-    env = FFAI_observation_Wrapper(env, include_action_mask_in_obs=True)
+    env = FFAI_observation_Wrapper(env, action_mask_in_obs=True)
     return env
 
 
@@ -77,7 +77,7 @@ class FFAI_actionWrapper(gym.ActionWrapper, ABC):
 
 
 class FFAI_observation_Wrapper(gym.ObservationWrapper, ABC):
-    def __init__(self, env: FFAIEnv, include_action_mask_in_obs=False):
+    def __init__(self, env: FFAIEnv, action_mask_in_obs=False):
         super().__init__(env)
 
         non_spat_keys = ['state', 'procedures', 'available-action-types']
@@ -86,25 +86,31 @@ class FFAI_observation_Wrapper(gym.ObservationWrapper, ABC):
         spat_obs = env.observation_space['board']
         non_spat_obs = gym.spaces.Box(low=0, high=1, shape=(num_non_spat_obs,))
 
-        if include_action_mask_in_obs:
+        if action_mask_in_obs:
             assert isinstance(env, FFAI_actionWrapper)
             action_mask_obs = gym.spaces.Box(low=0, high=1, shape=(self.action_space.n,))
-            self.observation_space = gym.spaces.Tuple((spat_obs, non_spat_obs, action_mask_obs))
-            self.observation = self.observation_with_action_mask
+            self.observation_space = gym.spaces.Dict({
+                "spatial obs": spat_obs,
+                "non spatial obs": non_spat_obs,
+                "action_mask": action_mask_obs})
+
         else:
-            self.observation_space = gym.spaces.Tuple((spat_obs, non_spat_obs))
-            self.observation = self.observation_without_action_mask
+            self.observation_space = gym.spaces.Dict({
+                "spatial obs": spat_obs,
+                "non spatial obs": non_spat_obs})
+
+        self.observation = self.obs_with_action_mask if action_mask_in_obs else self.obs_without_action_mask
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
         observation = self.observation(observation) if not done else observation
         return observation, reward, done, info
 
-    def observation_with_action_mask(self, obs):
-        return *self.observation_without_action_mask(obs), self.compute_action_masks()
+    def obs_with_action_mask(self, obs):
+        return *self.obs_without_action_mask(obs), self.compute_action_masks()
 
     @staticmethod
-    def observation_without_action_mask(obs):
+    def obs_without_action_mask(obs):
         spatial_obs = np.array(list(obs['board'].values()))
 
         non_spatial_obs = np.array(list(obs['state'].values()) +
