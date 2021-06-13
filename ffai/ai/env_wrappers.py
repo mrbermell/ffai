@@ -107,7 +107,8 @@ class FFAI_observation_Wrapper(gym.ObservationWrapper, ABC):
         return observation, reward, done, info
 
     def obs_with_action_mask(self, obs):
-        return *self.obs_without_action_mask(obs), self.compute_action_masks()
+        spatial_obs, non_spatial_obs = self.obs_without_action_mask(obs)
+        return spatial_obs, non_spatial_obs, self.compute_action_masks()
 
     @staticmethod
     def obs_without_action_mask(obs):
