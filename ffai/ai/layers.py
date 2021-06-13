@@ -47,7 +47,7 @@ class FeatureLayer:
 class OccupiedLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
 
         for player in game.state.home_team.players + game.state.home_team.players:
             if player.position is not None:
@@ -67,7 +67,7 @@ class OccupiedLayer(FeatureLayer):
 class OwnPlayerLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -90,7 +90,7 @@ class OwnPlayerLayer(FeatureLayer):
 class OppPlayerLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -118,7 +118,7 @@ class OppPlayerLayer(FeatureLayer):
 class OwnTackleZoneLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -139,7 +139,7 @@ class OwnTackleZoneLayer(FeatureLayer):
 class OppTackleZoneLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -160,7 +160,7 @@ class OppTackleZoneLayer(FeatureLayer):
 class UsedLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -182,7 +182,7 @@ class UsedLayer(FeatureLayer):
 class UpLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -204,7 +204,7 @@ class UpLayer(FeatureLayer):
 class StunnedLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -226,7 +226,7 @@ class StunnedLayer(FeatureLayer):
 class ActivePlayerLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
 
         if game.state.active_player is None or game.state.active_player.position is None:
             return out
@@ -244,7 +244,7 @@ class ActivePlayerLayer(FeatureLayer):
 class TargetPlayerLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         target = None
         for i in reversed(range(game.state.stack.size())):
             proc = game.state.stack.items[i]
@@ -278,7 +278,7 @@ class AvailablePositionLayer(FeatureLayer):
         self.action_type = action_type
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         for action_choice in game.state.available_actions:
             if action_choice.action_type != self.action_type:
                 continue
@@ -302,7 +302,7 @@ class AvailablePositionLayer(FeatureLayer):
 class RollProbabilityLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -329,7 +329,7 @@ class RollProbabilityLayer(FeatureLayer):
 class BlockDiceLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -356,7 +356,7 @@ class BlockDiceLayer(FeatureLayer):
 class MALayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -378,7 +378,7 @@ class MALayer(FeatureLayer):
 class STLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -400,7 +400,7 @@ class STLayer(FeatureLayer):
 class AGLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -422,7 +422,7 @@ class AGLayer(FeatureLayer):
 class AVLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -447,7 +447,7 @@ class SkillLayer(FeatureLayer):
         self.skill = skill
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -469,7 +469,7 @@ class SkillLayer(FeatureLayer):
 class MovementLeftLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
@@ -491,7 +491,7 @@ class MovementLeftLayer(FeatureLayer):
 class BallLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         for ball in game.state.pitch.balls:
             if ball.position is not None:
                 out[ball.position.y][ball.position.x] = 1.0
@@ -507,7 +507,7 @@ class BallLayer(FeatureLayer):
 class OwnHalfLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         home = active_team == game.state.home_team
         tiles = TwoPlayerArena.home_tiles if home else TwoPlayerArena.away_tiles
@@ -528,7 +528,7 @@ class OwnHalfLayer(FeatureLayer):
 class OwnTouchdownLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         home = active_team == game.state.home_team
         tile = Tile.HOME_TOUCHDOWN if home else Tile.AWAY_TOUCHDOWN
@@ -549,7 +549,7 @@ class OwnTouchdownLayer(FeatureLayer):
 class OppTouchdownLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         home = active_team == game.state.home_team
         tile = Tile.HOME_TOUCHDOWN if not home else Tile.AWAY_TOUCHDOWN
@@ -570,7 +570,7 @@ class OppTouchdownLayer(FeatureLayer):
 class CrowdLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         for y in range(len(game.arena.board)):
             for x in range(len(game.arena.board[0])):
                 out[y][x] = 1.0 if game.arena.board[y][x] == Tile.CROWD else 0.0
@@ -586,7 +586,7 @@ class CrowdLayer(FeatureLayer):
 class MovemenLeftLayer(FeatureLayer):
 
     def produce(self, game):
-        out = np.zeros((game.arena.height, game.arena.width))
+        out = np.zeros((game.arena.height, game.arena.width), dtype=np.float32)
         active_team = game.state.available_actions[0].team if len(game.state.available_actions) > 0 else None
         if active_team is None:
             return out
