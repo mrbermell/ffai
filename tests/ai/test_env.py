@@ -9,7 +9,7 @@ import gym
 
 def test_action_wrapper():
     env = gym.make("FFAI-v3")
-    env = wrappers.FFAI_actionWrapper(env)
+    env = wrappers.GotebotWrapper(env)
     env.reset()
 
     non_spatial_action_types = env.simple_action_types + env.defensive_formation_action_types + \
@@ -27,38 +27,38 @@ def test_action_wrapper():
         else:
             assert action_type in non_spatial_action_types
 
-        _, _, done, _ = env.step(action_index)
+        _, done, _, _, _ = env.step(action_index)
 
 
 def test_observation_wrapper():
     env = gym.make("FFAI-v3")
-    env = wrappers.FFAI_observation_Wrapper(env)
+    env = wrappers.GotebotWrapper(env)
     obs = env.reset()
 
-    assert len(obs) == 2
-    assert obs[0].shape == (len(env.layers), 17, 28)
-    assert obs[1].shape == (116, )
+    assert obs.shape == (len(env.layers), 17, 28)
+    #assert obs[1].shape == (116, )
 
 
 def test_fully_wrapped():
     env = gym.make("FFAI-wrapped-v3")
     obs = env.reset()
     done = False
-    while not done:
-        assert_type_and_range(obs)
-        assert len(obs) == 3
-        assert obs[0].shape == (len(env.layers), 17, 28)
-        assert obs[1].shape == (116,)
-        assert obs[2].shape == (8117,)
+    action_mask = env.compute_action_masks()
+    cum_abs_reward = 0
+    reward = 0
 
-        _, _, action_mask = obs
+    while not done:
+        cum_abs_reward += abs(reward)
+        assert_type_and_range(obs)
         action_index = np.random.choice(action_mask.nonzero()[0])
-        obs, _, done, _ = env.step(action_index)
+        reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
+
+    assert 0 < abs(cum_abs_reward)
 
 
 def assert_type_and_range(obs):
     for i, array in enumerate(obs):
-        assert array.dtype == float, f"obs[{i}] is not float"
+        assert array.dtype == np.float32, f"obs[{i}] is not float"
 
         max_val = np.max(array)
         assert max_val <= 1.0, f"obs[{i}][{find_first_index(array, max_val)}] is too high ({max_val})"
