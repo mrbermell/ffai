@@ -54,13 +54,30 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
         self.observation_space = env.observation_space['board']
 
+        self._spat_shape = None
+        self._non_spat_shape = None
+        self._action_shape = None
+
     def step(self, action):
         observation, reward, done, info = self.env.step(self.convert_action(action)) # FFAIEnv return
-        if done:
-            spat_obs, nonspat_obs, action_mask = None, None, None
-        else:
+        if not done:
             spat_obs, nonspat_obs, action_mask = self.gen_observation(observation)
+        else:
+            spat_obs = np.zeros(self._spat_shape, dtype=np.float32)
+            nonspat_obs = np.zeros(self._non_spat_shape, dtype=np.float32)
+            action_mask = np.zeros(self._action_shape, dtype=np.bool)
+
         return self.reward(reward), done, spat_obs, nonspat_obs, action_mask
+
+    def reset(self, **kwargs):
+        obs = self.env.reset(**kwargs)
+        spatial_obs, non_spatial_obs, action_mask = self.gen_observation(obs)
+
+        self._spat_shape = spatial_obs.shape
+        self._non_spat_shape = non_spatial_obs.shape
+        self._action_shape = action_mask.shape
+
+        return spatial_obs, non_spatial_obs, action_mask
 
     def convert_action(self, action):
         action_type, x, y = self.compute_action(action)
@@ -103,11 +120,6 @@ class GotebotWrapper(gym.Wrapper, ABC):
         self.action_mask = mask
         return mask
 
-    def reset(self, **kwargs):
-        obs = self.env.reset(**kwargs)
-
-        spatial_obs, non_spatial_obs, action_mask = self.gen_observation(obs)
-        return spatial_obs
 
     def gen_observation(self, obs):
         spatial_obs = np.array(list(obs['board'].values()), dtype=np.float32)

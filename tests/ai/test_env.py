@@ -33,27 +33,30 @@ def test_action_wrapper():
 def test_observation_wrapper():
     env = gym.make("FFAI-v3")
     env = wrappers.GotebotWrapper(env)
-    obs = env.reset()
+    spat, nonspat, mask = env.reset()
 
-    assert obs.shape == (len(env.layers), 17, 28)
+    assert spat.shape == (len(env.layers), 17, 28)
+    assert nonspat.shape == (116,)
+    assert mask.shape == (8117,)
     #assert obs[1].shape == (116, )
 
 
 def test_fully_wrapped():
     env = gym.make("FFAI-wrapped-v3")
-    obs = env.reset()
-    done = False
-    action_mask = env.compute_action_masks()
-    cum_abs_reward = 0
-    reward = 0
 
-    while not done:
-        cum_abs_reward += abs(reward)
-        assert_type_and_range(obs)
-        action_index = np.random.choice(action_mask.nonzero()[0])
-        reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
+    for _ in range(10):
+        spat_obs, nonspat_obs, action_mask = env.reset()
+        done = False
+        cum_abs_reward = 0
+        reward = 0
 
-    assert 0 < abs(cum_abs_reward)
+        while not done:
+            cum_abs_reward += abs(reward)
+            #assert_type_and_range((spat_obs, nonspat_obs))
+            action_index = np.random.choice(action_mask.nonzero()[0])
+            reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
+
+        assert 0 < abs(cum_abs_reward)
 
 
 def assert_type_and_range(obs):
