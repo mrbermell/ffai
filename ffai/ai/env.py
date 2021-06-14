@@ -201,14 +201,14 @@ class FFAIEnv(gym.Env):
             AGLayer(),
             AVLayer(),
             MovemenLeftLayer(),
-            BallLayer(),
-            OwnHalfLayer(),
-            OwnTouchdownLayer(),
-            OppTouchdownLayer(),
-            SkillLayer(Skill.BLOCK),
-            SkillLayer(Skill.DODGE),
-            SkillLayer(Skill.SURE_HANDS),
-            SkillLayer(Skill.CATCH),
+            #BallLayer(),
+            #OwnHalfLayer(),
+            #OwnTouchdownLayer(),
+            #OppTouchdownLayer(),
+            #SkillLayer(Skill.BLOCK),
+            #SkillLayer(Skill.DODGE),
+            #SkillLayer(Skill.SURE_HANDS),
+            #SkillLayer(Skill.CATCH),
             SkillLayer(Skill.PASS)
         ]
 
