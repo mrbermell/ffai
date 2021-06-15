@@ -122,7 +122,7 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
 
     def gen_observation(self, obs):
-        spatial_obs = np.array(list(obs['board'].values()), dtype=np.float32)
+        spatial_obs = np.transpose(np.array(list(obs['board'].values()), dtype=np.float32), (1,2,0) )
 
         non_spatial_obs = np.array(list(obs['state'].values()) +
                                    list(obs['procedures'].values()) +
