@@ -54,6 +54,7 @@ def test_fully_wrapped():
             cum_abs_reward += abs(reward)
             #assert_type_and_range((spat_obs, nonspat_obs))
             action_index = np.random.choice(action_mask.nonzero()[0])
+            action_index = np.random.randint(0, 100)
             reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
 
         assert 0 < abs(cum_abs_reward)

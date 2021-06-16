@@ -88,7 +88,9 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
     def compute_action(self, action_idx):
 
-        assert action_idx in self.action_mask.nonzero()[0]
+        #assert action_idx in self.action_mask.nonzero()[0]
+        if action_idx not in self.action_mask.nonzero()[0]:
+            action_idx = np.where(self.action_mask)[0][0]
 
         if action_idx < self._num_non_spat_action:
             return self._non_spatial_action_types[action_idx], 0, 0
