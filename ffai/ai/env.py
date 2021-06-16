@@ -119,17 +119,17 @@ class FFAIEnv(gym.Env):
         ActionType.FOLLOW_UP,
         ActionType.MOVE,
         ActionType.BLOCK,
-        ActionType.PASS,
-        ActionType.FOUL,
+        #ActionType.PASS,
+        #ActionType.FOUL,
         ActionType.HANDOFF,
-        ActionType.LEAP,
-        ActionType.STAB,
+        #ActionType.LEAP,
+        #ActionType.STAB,
         ActionType.SELECT_PLAYER,
         ActionType.START_MOVE,
         ActionType.START_BLOCK,
         ActionType.START_BLITZ,
-        ActionType.START_PASS,
-        ActionType.START_FOUL,
+        #ActionType.START_PASS,
+        #ActionType.START_FOUL,
         ActionType.START_HANDOFF
     ]
 
