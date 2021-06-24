@@ -172,6 +172,7 @@ class Pathfinder:
         return None
 
     def get_paths(self, target=None):
+        # disregard all rerolls and only 50% probability paths = 40% improve runtime
 
         ma = self.player.get_ma() - self.player.state.moves
         self.ma = max(0, ma)
@@ -185,6 +186,7 @@ class Pathfinder:
         can_sure_feet = self.player.has_skill(Skill.SURE_FEET) and Skill.SURE_FEET not in self.player.state.used_skills
         can_sure_hands = self.player.has_skill(Skill.SURE_HANDS)
         rr_states = {(self.trr, can_dodge, can_sure_feet, can_sure_hands): 1}
+        #rr_states = {(False, False, False, False): 1}
         node = Node(None, self.player.position, self.ma, self.gfis, euclidean_distance=0, rr_states=rr_states)
         if not self.player.state.up:
             node = self._expand_stand_up(node)
@@ -242,6 +244,9 @@ class Pathfinder:
         return min(6, max(2, target))
 
     def _expand(self, node: Node, target=None):
+        #if node.prob < 0.5:
+        #    return
+
         if target is not None:
             # TODO: handoff?
             if type(target) == Square and target.distance(node.position) > node.moves_left + node.gfis_left:
