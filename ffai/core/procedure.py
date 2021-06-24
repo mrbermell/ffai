@@ -3756,7 +3756,11 @@ class Turn(Procedure):
             
             return True
 
-        action.player.state.hypnotized = False
+        try:
+            action.player.state.hypnotized = False
+        except:
+            set_trace()
+
 
         self.game.state.active_player = action.player
             
