@@ -248,12 +248,16 @@ class Game:
                 # Type checking
                 if type(action.action_type) is not ActionType:
                     print("Illegal action type: ", type(action.action_type))
+                    assert type(action.action_type) is ActionType
                     return False
                 if action.player is not None and not isinstance(action.player, Player):
                     print("Illegal player type: ", type(action.action_type), action, self.state.stack.peek())
+                    raise AssertionError("Illegal player type")
+
                     return False
                 if action.position is not None and not isinstance(action.position, Square):
                     print("Illegal position type:", type(action.position), action.action_type.name)
+                    raise AssertionError("Illegal position type")
                     return False
                 # Check if player argument is used instead of position argument
                 if len(action_choice.players) == 0 and action.player is not None and action.position is None:
@@ -265,8 +269,10 @@ class Game:
                 if len(action_choice.players) > 1 and action.player not in action_choice.players:
                     if action.player is None:
                         print("Illegal player: None")
+                        raise AssertionError("Illegal player: None")
                     else:
                         print("Illegal player:", action.player.to_json(), action.action_type.name)
+                        raise AssertionError("Illegal player something")
                     return False
                 # Check position argument
                 if len(action_choice.positions) > 0 and action.position not in action_choice.positions:
