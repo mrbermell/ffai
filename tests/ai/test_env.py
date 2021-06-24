@@ -37,7 +37,7 @@ def test_observation_wrapper():
 
     assert spat.shape == (17, 28, len(env.layers))
     assert nonspat.shape == (116,)
-    assert mask.shape == (8117,)
+    assert mask.shape == (5261,)
     #assert obs[1].shape == (116, )
 
 
@@ -54,8 +54,10 @@ def test_fully_wrapped():
             cum_abs_reward += abs(reward)
             #assert_type_and_range((spat_obs, nonspat_obs))
             action_index = np.random.choice(action_mask.nonzero()[0])
-            action_index = np.random.randint(0, 100)
+            #action_index = np.random.randint(0, 100)
             reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
+            if type(env.game.get_procedure()) == ffai.core.procedure.MoveAction:
+                print("many actions!")
 
         assert 0 < abs(cum_abs_reward)
 

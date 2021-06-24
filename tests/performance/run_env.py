@@ -5,11 +5,13 @@ import numpy as np
 import ffai
 from ffai.core.game import Game
 from ffai.core.model import Agent
+import ffai.ai.env_wrappers as wrappers
 
-import cProfile
-import io
-import pstats
+#import cProfile
+#import io
+#import pstats
 
+import time
 
 def profile_and_print_result(function, sortkey="tottime"):
     """
@@ -27,21 +29,27 @@ def profile_and_print_result(function, sortkey="tottime"):
     print(s.getvalue())
 
 
-def run_env(n, enable_forward_model, env_name="FFAI-11-v3"):
+def run_env(n, env_name="FFAI-v3", enable_forward_model=False, pathfinding=False):
     env = gym.make(env_name)
+    env.config.pathfinding_enabled = pathfinding
+    env = wrappers.GotebotWrapper(env)
 
-    seed = 0
-    env.seed(0)
-    rnd = np.random.RandomState(seed)
+    for i in range(n):
+        seed = i
+        env.env.seed(seed)
+        rnd = np.random.RandomState(seed)
+        np.random.seed(seed)
 
-    for _ in range(n):
-        env.reset()
+        _, _, action_mask = env.reset()
         if enable_forward_model:
-            env.game.enable_forward_model()
+            env.env.game.enable_forward_model()
+
         done = False
 
         while not done:
-            _, _, done, _ = env.step(get_random_action_from_env(env, rnd))
+            action_index = np.random.choice(action_mask.nonzero()[0], )
+
+            _, done, _, _, action_mask = env.step(action_index)
 
 
 def get_random_action_from_env(env, random_state):
@@ -79,16 +87,29 @@ def run_game(nbr_of_games, enable_forward_model):
 
 
 if __name__ == "__main__":
-    nbr_of_games = 10
+    nbr_of_games = 3
 
-    print(f"---- Game played {nbr_of_games} times - forward model disabled ------")
-    profile_and_print_result(function=lambda: run_game(nbr_of_games, enable_forward_model=False), sortkey="tottime")
 
-    print(f"---- Game played {nbr_of_games} times - forward model enabled ------")
-    profile_and_print_result(function=lambda: run_game(nbr_of_games, enable_forward_model=True), sortkey="tottime")
 
-    print(f"---- Gym played {nbr_of_games} times - forward model disabled ------")
-    profile_and_print_result(function=lambda: run_env(nbr_of_games, enable_forward_model=False), sortkey="tottime")
+    print(f"---- Playing {nbr_of_games} games - pathfinding on ------")
+
+    start = time.time()
+    run_env(nbr_of_games, env_name="FFAI-v3", enable_forward_model=False, pathfinding=True)
+    end = time.time()
+
+    print(f"Played {nbr_of_games} in {end-start:.2f} seconds")
+
+    #profile_and_print_result(function=lambda: run_env(nbr_of_games, env_name="FFAI-v3", enable_forward_model=False, pathfinding=True), sortkey="tottime")
+
+    #print(f"---- Game played {nbr_of_games} times - no pathfinding ------")
+    #profile_and_print_result(function=lambda: run_env(nbr_of_games, env_name="FFAI-v3", enable_forward_model=False, pathfinding=False), sortkey="tottime")
+
+
+    #print(f"---- Game played {nbr_of_games} times - forward model enabled ------")
+    #profile_and_print_result(function=lambda: run_game(nbr_of_games, enable_forward_model=True), sortkey="tottime")
+
+    #print(f"---- Gym played {nbr_of_games} times - forward model disabled ------")
+    #profile_and_print_result(function=lambda: run_env(nbr_of_games, enable_forward_model=False), sortkey="tottime")
 
 
 
