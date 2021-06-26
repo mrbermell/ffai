@@ -422,10 +422,14 @@ class FFAIEnv(gym.Env):
 
     def available_action_types(self):
         if isinstance(self.game.get_procedure(), Setup):
+            if self.game.get_procedure().reorganize:
+                return [ActionType.END_SETUP]
+
+            available_actions_from_game = [action.action_type for action in self.game.state.available_actions]
             if self.game.get_kicking_team().team_id == self.team_id:
-                return [action_type for action_type in self.defensive_formation_action_types]
+                return [action_type for action_type in self.defensive_formation_action_types if action_type in available_actions_from_game]
             else:
-                return [action_type for action_type in self.offensive_formation_action_types]
+                return [action_type for action_type in self.offensive_formation_action_types if action_type in available_actions_from_game]
         return [action.action_type for action in self.game.state.available_actions if action.action_type in FFAIEnv.actions]
 
     def available_positions(self, action_type):
