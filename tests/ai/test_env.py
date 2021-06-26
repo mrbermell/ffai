@@ -56,10 +56,19 @@ def test_fully_wrapped():
             action_index = np.random.choice(action_mask.nonzero()[0])
             #action_index = np.random.randint(0, 100)
             reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
-            if type(env.game.get_procedure()) == ffai.core.procedure.MoveAction:
-                print("many actions!")
 
         assert 0 < abs(cum_abs_reward)
+
+def test_wrong_action_crashes():
+    env = gym.make("FFAI-wrapped-v3")
+    _, _, action_mask = env.reset()
+
+    try:
+        env.step(137)
+    except AssertionError:
+        pass
+    else:
+        assert False, "Above should raise error!"
 
 
 def assert_type_and_range(obs):
