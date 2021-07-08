@@ -7,6 +7,8 @@ from ffai.ai.env import FFAIEnv
 import gym
 import numpy as np
 
+from botbowlcurriculum import all_lectures
+
 
 def make_wrapped_env(**kwargs):
     env = gym.make("FFAI-v3")
@@ -32,6 +34,9 @@ class MaskStupidActions(gym.Wrapper, ABC):
 class GotebotWrapper(gym.Wrapper, ABC):
     def __init__(self, env):
         super().__init__(env)
+
+        self.lecture_idx = None
+        self.lecture = None
 
         self._x_max = env.action_space["x"].n
         self._y_max = env.action_space["y"].n
@@ -60,17 +65,37 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
     def step(self, action):
         observation, reward, done, info = self.env.step(self.convert_action(action)) # FFAIEnv return
+
+        # set done if drive is over.
+        done = done or sum([team.state.score for team in self.env.game.state.teams])>0 or self.env.game.state.half>1
+
         if not done:
-            spat_obs, nonspat_obs, action_mask = self.gen_observation(observation)
+            spat_obs, non_spat_obs, action_mask = self.gen_observation(observation)
         else:
             spat_obs = np.zeros(self._spat_shape, dtype=np.float32)
-            nonspat_obs = np.zeros(self._non_spat_shape, dtype=np.float32)
+            non_spat_obs = np.zeros(self._non_spat_shape, dtype=np.float32)
             action_mask = np.zeros(self._action_shape, dtype=np.bool)
 
-        return self.reward(reward), done, spat_obs, nonspat_obs, action_mask
+            if self.lecture_idx is not None:
+                # set the lecture outcome.
 
-    def reset(self, **kwargs):
-        obs = self.env.reset(**kwargs)
+                pass
+
+        return self.reward(reward), done, spat_obs, non_spat_obs, action_mask
+
+    def reset(self, lecture_levels_and_probs=None):
+        if lecture_levels_and_probs is not None:
+            # reset to a lecture
+            lecture_levels = lecture_levels_and_probs[:,0].astype(int)
+            lecture_prob = lecture_levels_and_probs[:,1]
+            self.lecture_idx  = np.random.choice(list(range(len(all_lectures))), 1, p=lecture_prob)[0]
+            self.lecture = all_lectures[self.lecture_idx]
+            self.lecture.level = lecture_levels[self.lecture_idx]
+            obs = self.env_reset_with_lecture()
+        else:
+            self.lecture_idx = None
+            obs = self.env.reset()
+
         spatial_obs, non_spatial_obs, action_mask = self.gen_observation(obs)
 
         self._spat_shape = spatial_obs.shape
@@ -116,8 +141,12 @@ class GotebotWrapper(gym.Wrapper, ABC):
                                      self.env.positional_action_types.index(action_type) * self._board_squares
 
                 for pos in self.env.available_positions(action_type):
+                    if pos is None:
+                        print("oh fuckity fuck")
                     mask[action_start_index + pos.x + pos.y * self._x_max] = True
 
+        if True not in mask:
+            print("oh fuck")
         assert True in mask, "No available action in action_mask"
         self.action_mask = mask
         return mask
@@ -149,6 +178,28 @@ class GotebotWrapper(gym.Wrapper, ABC):
                     r += reward
                 elif team == self.env.opp_team:
                     r -= reward
-                    # if info['ball_progression'] > 0:
-        #    r += info['ball_progression'] * ball_progression_reward
+
         return r
+
+    def env_reset_with_lecture(self):
+
+
+        self.env.game = self.lecture.reset_game(self.env.config)
+        self.env.game.set_available_actions()
+
+        self.env.game.set_seed(self.rnd.randint(0, 2 ** 31))
+
+        self.env.actor = self.env.game.home_agent
+        self.env.opp_actor = self.env.game.away_agent
+
+        self.env.last_report_idx = len(self.game.state.reports)
+
+        self.env.own_team = self.game.get_agent_team(self.actor)
+        self.env.opp_team = self.game.get_agent_team(self.opp_actor)
+
+        return self.env._observation(self.game)
+
+    def get_lecture_outcome(self):
+        lect_outcome = self.lecture.evaluate(self.env.game)
+        lecture_idx = all_lectures.index(self.lecture)
+        return np.concatenate([np.array([lecture_idx]), lect_outcome])
