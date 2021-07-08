@@ -61,7 +61,8 @@ def test_fully_wrapped():
 
 
 def test_env_reset_lecture():
-    env = gym.make("FFAI-wrapped-v3")
+    env = wrappers.GotebotWrapper(gym.make("FFAI-v3"), all_lectures)
+
 
     num_lectures = len(all_lectures)
 
@@ -82,7 +83,7 @@ def test_env_reset_lecture():
 
 
 def test_env_playing_all_lectures():
-    env = gym.make("FFAI-wrapped-v3")
+    env = wrappers.GotebotWrapper(gym.make("FFAI-v3"), all_lectures)
     academy = make_academy()
     for lect_hist in academy.lect_histo:
         lect = lect_hist.lecture

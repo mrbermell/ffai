@@ -7,8 +7,6 @@ from ffai.ai.env import FFAIEnv
 import gym
 import numpy as np
 
-from botbowlcurriculum import all_lectures
-
 
 def make_wrapped_env(**kwargs):
     env = gym.make("FFAI-v3")
@@ -32,11 +30,12 @@ class MaskStupidActions(gym.Wrapper, ABC):
 
 
 class GotebotWrapper(gym.Wrapper, ABC):
-    def __init__(self, env):
+    def __init__(self, env, all_lectures=None):
         super().__init__(env)
 
         self.lecture_idx = None
         self.lecture = None
+        self.all_lectures = all_lectures
 
         self._x_max = env.action_space["x"].n
         self._y_max = env.action_space["y"].n
@@ -88,8 +87,8 @@ class GotebotWrapper(gym.Wrapper, ABC):
             # reset to a lecture
             lecture_levels = lecture_levels_and_probs[:,0].astype(int)
             lecture_prob = lecture_levels_and_probs[:,1]
-            self.lecture_idx  = np.random.choice(list(range(len(all_lectures))), 1, p=lecture_prob)[0]
-            self.lecture = all_lectures[self.lecture_idx]
+            self.lecture_idx  = np.random.choice(list(range(len(self.all_lectures))), 1, p=lecture_prob)[0]
+            self.lecture = self.all_lectures[self.lecture_idx]
             self.lecture.level = lecture_levels[self.lecture_idx]
             obs = self.env_reset_with_lecture()
         else:
@@ -201,5 +200,5 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
     def get_lecture_outcome(self):
         lect_outcome = self.lecture.evaluate(self.env.game)
-        lecture_idx = all_lectures.index(self.lecture)
-        return np.concatenate([np.array([lecture_idx]), lect_outcome])
+        lecture_idx = self.all_lectures.index(self.lecture)
+        return np.concatenate([np.array([lecture_idx]), lect_outcome]).astype(np.int32)
