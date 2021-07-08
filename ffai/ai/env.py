@@ -119,17 +119,17 @@ class FFAIEnv(gym.Env):
         ActionType.FOLLOW_UP,
         ActionType.MOVE,
         ActionType.BLOCK,
-        #ActionType.PASS,
-        #ActionType.FOUL,
+        ActionType.PASS,
+        ActionType.FOUL,
         ActionType.HANDOFF,
-        #ActionType.LEAP,
-        #ActionType.STAB,
+        ActionType.LEAP,
+        ActionType.STAB,
         ActionType.SELECT_PLAYER,
         ActionType.START_MOVE,
         ActionType.START_BLOCK,
         ActionType.START_BLITZ,
-        #ActionType.START_PASS,
-        #ActionType.START_FOUL,
+        ActionType.START_PASS,
+        ActionType.START_FOUL,
         ActionType.START_HANDOFF
     ]
 
@@ -166,7 +166,6 @@ class FFAIEnv(gym.Env):
         self.config.competition_mode = False
         self.config.fast_mode = True
         self.game = None
-        self.team_id = None
         self.ruleset = load_rule_set(config.ruleset, all_rules=False)
         self.home_team = home_team
         self.away_team = away_team
@@ -178,8 +177,8 @@ class FFAIEnv(gym.Env):
         self.cv = None
         self.last_obs = None
         self.last_report_idx = 0
-        self.last_ball_team = None
-        self.last_ball_x = None
+        self.formation_action_types = self.offensive_formation_action_types + self.defensive_formation_action_types
+
         self.own_team = None
         self.opp_team = None
 
@@ -201,14 +200,14 @@ class FFAIEnv(gym.Env):
             AGLayer(),
             AVLayer(),
             MovemenLeftLayer(),
-            #BallLayer(),
-            #OwnHalfLayer(),
-            #OwnTouchdownLayer(),
-            #OppTouchdownLayer(),
-            #SkillLayer(Skill.BLOCK),
-            #SkillLayer(Skill.DODGE),
-            #SkillLayer(Skill.SURE_HANDS),
-            #SkillLayer(Skill.CATCH),
+            BallLayer(),
+            OwnHalfLayer(),
+            OwnTouchdownLayer(),
+            OppTouchdownLayer(),
+            SkillLayer(Skill.BLOCK),
+            SkillLayer(Skill.DODGE),
+            SkillLayer(Skill.SURE_HANDS),
+            SkillLayer(Skill.CATCH),
             SkillLayer(Skill.PASS)
         ]
 
@@ -251,30 +250,8 @@ class FFAIEnv(gym.Env):
         reward = 0
         if self.game.get_winner() is not None:
             reward = 1 if self.game.get_winner() == self.actor else -1
-        team = self.game.state.home_team if self.team_id == self.home_team.team_id else self.game.state.away_team
-        opp_team = self.game.state.home_team if self.team_id != self.home_team.team_id else self.game.state.away_team
-        ball_carrier = self.game.get_ball_carrier()
-        ball_team = ball_carrier.team if ball_carrier is not None else None
-        ball_position = self.game.get_ball_position()
-        progression = 0
-        if ball_team == team and self.last_ball_team:
-            #print("From: ", self.last_ball_x, ", To: ", ball_position.x)
-            if team == self.game.state.home_team:
-                progression = self.last_ball_x - ball_position.x
-            else:
-                progression = ball_position.x - self.last_ball_x
-            #print("Progression: ", progression)
-        self.last_ball_x = ball_position.x if ball_position is not None else None
-        self.last_ball_team = ball_team
-        info = {
-            'cas_inflicted': len(self.game.get_casualties(team)),
-            'opp_cas_inflicted': len(self.game.get_casualties(opp_team)),
-            'touchdowns': team.state.score,
-            'opp_touchdowns': opp_team.state.score,
-            'half': self.game.state.round,
-            'round': self.game.state.round,
-            'ball_progression': progression
-        }
+
+        info = {}
         return self._observation(self.game), reward, self.game.state.game_over, info
 
     def seed(self, seed=None):
@@ -394,7 +371,6 @@ class FFAIEnv(gym.Env):
         return obs
 
     def reset(self):
-        self.team_id = self.home_team.team_id
         home_agent = self.actor
         away_agent = self.opp_actor
         seed = self.rnd.randint(0, 2**31)
@@ -407,9 +383,8 @@ class FFAIEnv(gym.Env):
                          ruleset=self.ruleset,
                          seed=seed)
         self.last_report_idx = len(self.game.state.reports)
-        self.last_ball_team = None
-        self.last_ball_x = None
         self.game.init()
+
         self.own_team = self.game.get_agent_team(self.actor)
         self.opp_team = self.game.get_agent_team(self.opp_actor)
 
@@ -426,10 +401,8 @@ class FFAIEnv(gym.Env):
                 return [ActionType.END_SETUP]
 
             available_actions_from_game = [action.action_type for action in self.game.state.available_actions]
-            if self.game.get_kicking_team().team_id == self.team_id:
-                return [action_type for action_type in self.defensive_formation_action_types if action_type in available_actions_from_game]
-            else:
-                return [action_type for action_type in self.offensive_formation_action_types if action_type in available_actions_from_game]
+            return [action_type for action_type in self.formation_action_types if action_type in available_actions_from_game]
+
         return [action.action_type for action in self.game.state.available_actions if action.action_type in FFAIEnv.actions]
 
     def available_positions(self, action_type):
