@@ -85,6 +85,8 @@ class GotebotWrapper(gym.Wrapper, ABC):
     def reset(self, lecture_levels_and_probs=None):
         if lecture_levels_and_probs is not None:
             # reset to a lecture
+            if type(lecture_levels_and_probs) != np.ndarray:
+                lecture_levels_and_probs = lecture_levels_and_probs.numpy()
             lecture_levels = lecture_levels_and_probs[:,0].astype(int)
             lecture_prob = lecture_levels_and_probs[:,1]
             self.lecture_idx  = np.random.choice(list(range(len(self.all_lectures))), 1, p=lecture_prob)[0]
