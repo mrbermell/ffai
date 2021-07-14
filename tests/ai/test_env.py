@@ -60,50 +60,42 @@ def test_fully_wrapped():
         assert 0 < abs(cum_abs_reward)
 
 
-def test_env_reset_lecture():
+def test_env_reset_and_outcome_lecture():
     env = wrappers.GotebotWrapper(gym.make("FFAI-v3"), all_lectures)
-
 
     num_lectures = len(all_lectures)
+    probs = np.ones(num_lectures) / num_lectures
 
-    probs = np.random.random(num_lectures)
-    probs /= sum(probs)
+    for level in range(10):
+        levels = np.ones(num_lectures, dtype=np.int) * level
+        levels_and_probs = np.stack((levels, probs), axis=1)
 
-    levels = np.zeros(num_lectures, dtype=np.int)
-    levels_and_probs = np.stack((levels, probs), axis=1)
+        _, _, action_mask = env.reset(levels_and_probs)
+        done = False
 
-    spat_obs, nonspat_obs, action_mask = env.reset(levels_and_probs)
-    done = False
+        while not done:
+            action_index = np.random.choice(action_mask.nonzero()[0])
+            _, done, _, _, action_mask = env.step(action_index)
 
-    while not done:
-        action_index = np.random.choice(action_mask.nonzero()[0])
-        reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
+        outcome = env.get_lecture_outcome()
 
-    env.get_lecture_outcome()
+        assert outcome[0] == all_lectures.index(env.lecture)
+        assert outcome[1] == level
+        assert outcome[2] in [-1, 0, 1]
 
 
-def test_env_playing_all_lectures():
+def test_env_reset_all_lectures():
     env = wrappers.GotebotWrapper(gym.make("FFAI-v3"), all_lectures)
-    academy = make_academy()
-    for lect_hist in academy.lect_histo:
-        lect = lect_hist.lecture
-        env.lecture = lect
-        for level in range(lect.max_level):
+
+    for lecture in all_lectures:
+        env.lecture = lecture
+        for level in range(lecture.max_level):
             env.lecture.level = level
-            spatial_obs, non_spatial_obs, action_mask = env.gen_observation(env.env_reset_with_lecture())
+            _, _, action_mask = env.gen_observation(env.env_reset_with_lecture())
             assert env.env.own_team.team_id == env.env.game.state.available_actions[0].team.team_id
 
-            done = False
-            while not done:
-                action_index = np.random.choice(action_mask.nonzero()[0])
-                reward, done, spat_obs, nonspat_obs, action_mask = env.step(action_index)
-
-            outcome = env.get_lecture_outcome()
-            academy.log_training(outcome)
-            assert len(outcome) == 3
-            assert outcome[0] == all_lectures.index(lect)
-            assert outcome[1] == level
-            assert outcome[2] in [-1, 0, 1]
+            action_index = np.random.choice(action_mask.nonzero()[0])
+            env.step(action_index)
 
 def test_wrong_action_crashes():
     env = gym.make("FFAI-wrapped-v3")
