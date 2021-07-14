@@ -14,7 +14,10 @@ from ffai.ai.layers import *
 import uuid
 import math
 from copy import deepcopy
-import tkinter as tk
+try:
+    import tkinter as tk
+except:
+    pass
 
 
 class FFAIEnv(gym.Env):
