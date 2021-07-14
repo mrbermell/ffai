@@ -37,8 +37,8 @@ def test_observation_wrapper():
     spat, nonspat, mask = env.reset()
 
     assert spat.shape == (17, 28, len(env.layers))
-    assert nonspat.shape == (116,)
-    assert mask.shape == (8117,)
+    assert nonspat.shape == (79,)
+    assert mask.shape == (5261,)
     #assert obs[1].shape == (116, )
 
 

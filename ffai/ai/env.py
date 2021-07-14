@@ -59,16 +59,16 @@ class FFAIEnv(gym.Env):
         ActionType.SELECT_PLAYER,
         ActionType.MOVE,
         ActionType.BLOCK,
-        ActionType.PASS,
-        ActionType.FOUL,
+        #ActionType.PASS,
+        #ActionType.FOUL,
         ActionType.HANDOFF,
-        ActionType.LEAP,
-        ActionType.STAB,
+        #ActionType.LEAP,
+        #ActionType.STAB,
         ActionType.START_MOVE,
         ActionType.START_BLOCK,
         ActionType.START_BLITZ,
-        ActionType.START_PASS,
-        ActionType.START_FOUL,
+        #ActionType.START_PASS,
+        #ActionType.START_FOUL,
         ActionType.START_HANDOFF,
         ActionType.USE_SKILL,
         ActionType.DONT_USE_SKILL,
@@ -120,17 +120,17 @@ class FFAIEnv(gym.Env):
         ActionType.FOLLOW_UP,
         ActionType.MOVE,
         ActionType.BLOCK,
-        ActionType.PASS,
-        ActionType.FOUL,
+        #ActionType.PASS,
+        #ActionType.FOUL,
         ActionType.HANDOFF,
-        ActionType.LEAP,
-        ActionType.STAB,
+        #ActionType.LEAP,
+        #ActionType.STAB,
         ActionType.SELECT_PLAYER,
         ActionType.START_MOVE,
         ActionType.START_BLOCK,
         ActionType.START_BLITZ,
-        ActionType.START_PASS,
-        ActionType.START_FOUL,
+        #ActionType.START_PASS,
+        #ActionType.START_FOUL,
         ActionType.START_HANDOFF
     ]
 
@@ -190,7 +190,7 @@ class FFAIEnv(gym.Env):
             OwnTackleZoneLayer(),
             OppTackleZoneLayer(),
             UpLayer(),
-            StunnedLayer(),
+            #StunnedLayer(),
             UsedLayer(),
             RollProbabilityLayer(),
             BlockDiceLayer(),
@@ -198,8 +198,8 @@ class FFAIEnv(gym.Env):
             TargetPlayerLayer(),
             MALayer(),
             STLayer(),
-            AGLayer(),
-            AVLayer(),
+            #AGLayer(),
+            #AVLayer(),
             MovemenLeftLayer(),
             BallLayer(),
             OwnHalfLayer(),
@@ -208,8 +208,8 @@ class FFAIEnv(gym.Env):
             SkillLayer(Skill.BLOCK),
             SkillLayer(Skill.DODGE),
             SkillLayer(Skill.SURE_HANDS),
-            SkillLayer(Skill.CATCH),
-            SkillLayer(Skill.PASS)
+            #SkillLayer(Skill.CATCH),
+            #SkillLayer(Skill.PASS)
         ]
 
         for action_type in FFAIEnv.positional_action_types:
@@ -219,7 +219,7 @@ class FFAIEnv(gym.Env):
 
         self.observation_space = spaces.Dict({
             'board': spaces.Box(low=0, high=1, shape=(len(self.layers), arena.height, arena.width)),
-            'state': spaces.Box(low=0, high=1, shape=(50,)),
+            'state': spaces.Box(low=0, high=1, shape=(19,)),
             'procedures': spaces.Box(low=0, high=1, shape=(len(FFAIEnv.procedures),)),
             'available-action-types': spaces.Box(low=0, high=1, shape=(len(FFAIEnv.actions),))
         })
@@ -286,7 +286,7 @@ class FFAIEnv(gym.Env):
         opp_team = game.get_opp_team(active_team) if active_team is not None else None
 
         # State
-        obs['state']['half'] = game.state.half - 1.0
+        #obs['state']['half'] = game.state.half - 1.0
         obs['state']['round'] = game.state.round / 8.0
         obs['state']['is sweltering heat'] = 1.0 if game.state.weather == WeatherType.SWELTERING_HEAT else 0.0
         obs['state']['is very sunny'] = 1.0 if game.state.weather == WeatherType.VERY_SUNNY else 0.0
@@ -295,52 +295,52 @@ class FFAIEnv(gym.Env):
         obs['state']['is blizzard'] = 1.0 if game.state.weather.value == WeatherType.BLIZZARD else 0.0
 
         obs['state']['is own turn'] = 1.0 if game.state.current_team == active_team else 0.0
-        obs['state']['is kicking first half'] = 1.0 if game.state.kicking_first_half == active_team else 0.0
-        obs['state']['is kicking this drive'] = 1.0 if game.state.kicking_this_drive == active_team else 0.0
-        obs['state']['own reserves'] = len(game.get_reserves(active_team)) / 16.0 if active_team is not None else 0.0
-        obs['state']['own kods'] = len(game.get_knocked_out(active_team)) / 16.0 if active_team is not None else 0.0
-        obs['state']['own casualites'] = len(game.get_casualties(active_team)) / 16.0 if active_team is not None else 0.0
-        obs['state']['opp reserves'] = len(game.get_reserves(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
-        obs['state']['opp kods'] = len(game.get_knocked_out(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
-        obs['state']['opp casualties'] = len(game.get_casualties(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
+        #obs['state']['is kicking first half'] = 1.0 if game.state.kicking_first_half == active_team else 0.0
+        #obs['state']['is kicking this drive'] = 1.0 if game.state.kicking_this_drive == active_team else 0.0
+        ##obs['state']['own reserves'] = len(game.get_reserves(active_team)) / 16.0 if active_team is not None else 0.0
+        #obs['state']['own kods'] = len(game.get_knocked_out(active_team)) / 16.0 if active_team is not None else 0.0
+        #obs['state']['own casualites'] = len(game.get_casualties(active_team)) / 16.0 if active_team is not None else 0.0
+        #obs['state']['opp reserves'] = len(game.get_reserves(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
+        #obs['state']['opp kods'] = len(game.get_knocked_out(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
+        #obs['state']['opp casualties'] = len(game.get_casualties(game.get_opp_team(active_team))) / 16.0 if active_team is not None else 0.0
 
-        obs['state']['own score'] = active_team.state.score / 16.0 if active_team is not None else 0.0
+        #obs['state']['own score'] = active_team.state.score / 16.0 if active_team is not None else 0.0
         obs['state']['own turns'] = active_team.state.turn / 8.0 if active_team is not None else 0.0
-        obs['state']['own starting rerolls'] = active_team.state.rerolls_start / 8.0 if active_team is not None else 0.0
+        #obs['state']['own starting rerolls'] = active_team.state.rerolls_start / 8.0 if active_team is not None else 0.0
         obs['state']['own rerolls left'] = active_team.state.rerolls / 8.0 if active_team is not None else 0.0
-        obs['state']['own ass coaches'] = active_team.state.ass_coaches / 8.0 if active_team is not None else 0.0
-        obs['state']['own cheerleaders'] = active_team.state.cheerleaders / 8.0 if active_team is not None else 0.0
-        obs['state']['own bribes'] = active_team.state.bribes / 4.0 if active_team is not None else 0.0
-        obs['state']['own babes'] = active_team.state.babes / 4.0 if active_team is not None else 0.0
-        obs['state']['own apothecaries'] = 0.0 if active_team is None else active_team.state.apothecaries / 2
+        #obs['state']['own ass coaches'] = active_team.state.ass_coaches / 8.0 if active_team is not None else 0.0
+        #obs['state']['own cheerleaders'] = active_team.state.cheerleaders / 8.0 if active_team is not None else 0.0
+        #obs['state']['own bribes'] = active_team.state.bribes / 4.0 if active_team is not None else 0.0
+        #obs['state']['own babes'] = active_team.state.babes / 4.0 if active_team is not None else 0.0
+        #obs['state']['own apothecaries'] = 0.0 if active_team is None else active_team.state.apothecaries / 2
         obs['state']['own reroll available'] = 1.0 if active_team is not None and not active_team.state.reroll_used else 0.0
-        obs['state']['own fame'] = active_team.state.fame if active_team is not None else 0.0
+        #obs['state']['own fame'] = active_team.state.fame if active_team is not None else 0.0
 
-        obs['state']['opp score'] = opp_team.state.score / 16.0 if opp_team is not None else 0.0
+        #obs['state']['opp score'] = opp_team.state.score / 16.0 if opp_team is not None else 0.0
         obs['state']['opp turns'] = opp_team.state.turn / 8.0 if opp_team is not None else 0.0
-        obs['state']['opp starting rerolls'] = opp_team.state.rerolls_start / 8.0 if opp_team is not None else 0.0
-        obs['state']['opp rerolls left'] = opp_team.state.rerolls / 8.0 if opp_team is not None else 0.0
-        obs['state']['opp ass coaches'] = opp_team.state.ass_coaches / 8.0 if opp_team is not None else 0.0
-        obs['state']['opp cheerleaders'] = opp_team.state.cheerleaders / 8.0 if opp_team is not None else 0.0
-        obs['state']['opp bribes'] = opp_team.state.bribes / 4.0 if opp_team is not None else 0.0
-        obs['state']['opp babes'] = opp_team.state.babes / 4.0 if opp_team is not None else 0.0
-        obs['state']['opp apothecaries'] = 0.0 if opp_team is None else active_team.state.apothecaries / 2
-        obs['state']['opp reroll available'] = 1.0 if opp_team is not None and not opp_team.state.reroll_used else 0.0
-        obs['state']['opp fame'] = opp_team.state.fame if opp_team is not None else 0.0
+        #obs['state']['opp starting rerolls'] = opp_team.state.rerolls_start / 8.0 if opp_team is not None else 0.0
+        #obs['state']['opp rerolls left'] = opp_team.state.rerolls / 8.0 if opp_team is not None else 0.0
+        #obs['state']['opp ass coaches'] = opp_team.state.ass_coaches / 8.0 if opp_team is not None else 0.0
+        #obs['state']['opp cheerleaders'] = opp_team.state.cheerleaders / 8.0 if opp_team is not None else 0.0
+        #obs['state']['opp bribes'] = opp_team.state.bribes / 4.0 if opp_team is not None else 0.0
+        #obs['state']['opp babes'] = opp_team.state.babes / 4.0 if opp_team is not None else 0.0
+        #obs['state']['opp apothecaries'] = 0.0 if opp_team is None else active_team.state.apothecaries / 2
+        #obs['state']['opp reroll available'] = 1.0 if opp_team is not None and not opp_team.state.reroll_used else 0.0
+        #obs['state']['opp fame'] = opp_team.state.fame if opp_team is not None else 0.0
 
         obs['state']['is blitz available'] = 1.0 if game.is_blitz_available() else 0.0
-        obs['state']['is pass available'] = 1.0 if game.is_pass_available() else 0.0
+        #obs['state']['is pass available'] = 1.0 if game.is_pass_available() else 0.0
         obs['state']['is handoff available'] = 1.0 if game.is_handoff_available() else 0.0
-        obs['state']['is foul available'] = 1.0 if game.is_foul_available() else 0.0
+        #obs['state']['is foul available'] = 1.0 if game.is_foul_available() else 0.0
         obs['state']['is blitz'] = 1.0 if game.is_blitz() else 0.0
         obs['state']['is quick snap'] = 1.0 if game.is_quick_snap() else 0.0
 
         obs['state']['is move action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.MOVE else 0.0
         obs['state']['is block action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.BLOCK else 0.0
         obs['state']['is blitz action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.BLITZ else 0.0
-        obs['state']['is pass action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.PASS else 0.0
+        #obs['state']['is pass action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.PASS else 0.0
         obs['state']['is handoff action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.HANDOFF else 0.0
-        obs['state']['is foul action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.FOUL else 0.0
+        #obs['state']['is foul action'] = 1.0 if game.state.active_player is not None and game.get_player_action_type() == PlayerActionType.FOUL else 0.0
 
         # Procedure
         for procedure in FFAIEnv.procedures:
