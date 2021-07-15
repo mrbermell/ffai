@@ -112,7 +112,7 @@ class GotebotWrapper(gym.Wrapper, ABC):
                 'x': x,
                 'y': y}
 
-    def compute_action(self, action_idx):
+    def compute_action(self, action_idx, flip=False):
 
         assert action_idx in self.action_mask.nonzero()[0], f"Action {action_idx} is not in action mask!"
         #if action_idx not in self.action_mask.nonzero()[0]:
@@ -127,9 +127,13 @@ class GotebotWrapper(gym.Wrapper, ABC):
         spatial_action_type_idx = int(spatial_idx / self._board_squares)
         spatial_action_type = self.env.positional_action_types[spatial_action_type_idx]
 
+        if flip:
+            spatial_x = self.env.game.arena.width - 1 - spatial_x
+
         return spatial_action_type, spatial_x, spatial_y
 
-    def compute_action_masks(self):
+    def compute_action_masks(self, flip=False):
+        flip_constant = self.env.game.arena.width - 1
 
         mask = np.zeros(self.action_space.n, dtype=bool)
 
@@ -142,18 +146,19 @@ class GotebotWrapper(gym.Wrapper, ABC):
                                      self.env.positional_action_types.index(action_type) * self._board_squares
 
                 for pos in self.env.available_positions(action_type):
-                    if pos is None:
-                        print("oh fuckity fuck")
-                    mask[action_start_index + pos.x + pos.y * self._x_max] = True
+                    x = pos.x if not flip else flip_constant - pos.x
 
-        if True not in mask:
-            print("oh fuck")
+                    mask[action_start_index + x + pos.y * self._x_max] = True
+
         assert True in mask, "No available action in action_mask"
         self.action_mask = mask
         return mask
 
 
-    def gen_observation(self, obs):
+    def gen_observation(self, obs, flip=False):
+        if flip:
+            obs['board'] = self._flip(obs['board'])
+
         spatial_obs = np.transpose(np.array(list(obs['board'].values()), dtype=np.float32), (1,2,0) )
 
         non_spatial_obs = np.array(list(obs['state'].values()) +
@@ -162,7 +167,13 @@ class GotebotWrapper(gym.Wrapper, ABC):
 
         # non_spatial_obs = np.expand_dims(non_spatial_obs, axis=0)
 
-        return spatial_obs, non_spatial_obs, self.compute_action_masks()
+        return spatial_obs, non_spatial_obs, self.compute_action_masks(flip=flip)
+
+    def _flip(self, board):
+        flipped = {}
+        for name, layer in board.items():
+            flipped[name] = np.flip(layer, 1)
+        return flipped
 
     def reward(self, reward=0.0):
         r = reward
